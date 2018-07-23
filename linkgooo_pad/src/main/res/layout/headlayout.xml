@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="128px"
+    android:background="#f2354052"
+    android:orientation="vertical"
+    >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="126px"
+        android:layout_marginLeft="64px"
+        android:layout_marginRight="64px"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_gravity="center"
+       ><RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tv_time"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textColor="@color/white"
+            android:text="9月2日星期三  晚上20:10"
+            android:textSize="40px"
+            android:gravity="center_vertical"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+    </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="924px"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center">
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textColor="@color/white"
+            android:textSize="40px"
+            android:text="欢迎使用VEINPAD"
+            android:gravity="center"/>
+        </RelativeLayout>
+     <RelativeLayout
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:gravity="center_vertical">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.5"
+            android:layout_alignParentRight="true"
+            android:visibility="invisible"
+            android:src="@drawable/new_logo"/>
+     </RelativeLayout>
+      </LinearLayout>
+    <View
+        android:layout_width="wrap_content"
+        android:layout_height="2px"
+        android:background="#c8c9ca"/>
+</LinearLayout>

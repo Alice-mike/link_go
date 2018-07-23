@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/main_bg"
+    android:gravity="center"
+    android:orientation="vertical"
+   >
+
+    <LinearLayout
+        android:layout_width="857px"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="857px"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                style="@style/edit_linearLayout"
+                android:focusable="true"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+
+                <com.soonvein.cloud.base.ClearEditText
+                    android:id="@+id/phoneNum"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/btn_view_height"
+                    android:background="@drawable/textview_style"
+                    android:drawablePadding="10dp"
+                    android:drawableLeft="@drawable/phone"
+                    android:hint="@string/hint_phone_11"
+                    android:maxLength="11"
+                    android:padding="10dp"
+                    android:text=""
+                    android:textSize="@dimen/main_text_size" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/verifyLayout"
+            android:layout_width="857px"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:weightSum="1">
+
+            <LinearLayout
+                style="@style/edit_linearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                >
+
+                <com.soonvein.cloud.base.ClearEditText
+                    android:id="@+id/verifyCode"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/btn_view_height"
+                    android:background="@drawable/textview_style"
+                    android:drawablePadding="10dp"
+                    android:drawableLeft="@drawable/code"
+                    android:hint="@string/hint_verify_code"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:maxLength="4"
+                    android:padding="10dp"
+                    android:text=""
+                    android:textSize="@dimen/main_text_size" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/getVerifyCode"
+                android:layout_width="300px"
+                android:layout_height="@dimen/btn_view_height"
+                android:layout_marginLeft="50dp"
+                android:layout_weight="0.3"
+                android:background="@drawable/btn_code_bg"
+                android:text="@string/get_verify_code"
+                android:imeOptions="actionGo"
+                android:textColor="@color/white"
+                android:textSize="@dimen/btn_text_size" />
+        </LinearLayout>
+
+        <!--<LinearLayout-->
+            <!--android:layout_width="1057px"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginTop="35px"-->
+            <!--android:gravity="center_vertical">-->
+            <!--<Button-->
+                <!--android:id="@+id/next"-->
+                <!--android:layout_width="1dp"-->
+                <!--android:layout_height="@dimen/btn_view_height"-->
+                <!--android:layout_weight="1"-->
+                <!--android:background="@drawable/signin_btn_bg"-->
+                <!--android:text="@string/confirm"-->
+                <!--android:textSize="@dimen/btn_text_size" />-->
+        <!--</LinearLayout>-->
+        <LinearLayout
+            android:layout_width="857dp"
+            android:layout_height="wrap_content"
+
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" >
+                <Button
+                    android:id="@+id/digitkeypad_1"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/digitKeyppad_one"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+                <Button
+                    android:id="@+id/digitkeypad_2"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/digitKeyppad_two"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+
+                <Button
+                    android:id="@+id/digitkeypad_3"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/digitKeyppad_three"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal" >
+                <Button
+                    android:id="@+id/digitkeypad_4"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:gravity="center"
+                    android:layout_weight="1"
+                    android:text="@string/digitKeyppad_four"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+
+                <Button
+                    android:id="@+id/digitkeypad_5"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:gravity="center"
+                    android:layout_weight="1"
+                    android:text="@string/digitKeyppad_five"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+
+                <Button
+                    android:id="@+id/digitkeypad_6"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/digitKeyppad_six"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal" >
+                <Button
+                    android:id="@+id/digitkeypad_7"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/digitKeyppad_seven"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+
+                <Button
+                    android:id="@+id/digitkeypad_8"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/digitKeyppad_eight"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+                <Button
+                    android:id="@+id/digitkeypad_9"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/digitKeyppad_nine"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal" >
+                <Button
+                    android:id="@+id/digitkeypad_c"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/digitKeyppad_delect"
+                    android:gravity="center"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+                <Button
+                    android:id="@+id/digitkeypad_0"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="@string/digitKeyppad_zero"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+
+                <Button
+                    android:id="@+id/digitkeypad_ok"
+                    android:layout_width="180dp"
+                    android:layout_height="110dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/verify_btn_bg"
+                    android:textColor="@color/black"
+                    android:gravity="center"
+                    android:text="@string/digitKeyppad_ok"
+                    android:textSize="@dimen/text_size_40sp" >
+                </Button>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

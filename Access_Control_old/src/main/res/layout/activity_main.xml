@@ -1,0 +1,158 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/index_bg"
+    android:layout_gravity="center"
+    tools:ignore="MergeRootFrame" >
+    <include layout="@layout/lock_head_main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"></include>
+<!--<EditText -->
+    <!--android:id="@+id/edt"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="60dp"-->
+    <!--android:textSize="20dp"-->
+    <!--android:hint="输入你想测试的gpio口，例如：12"-->
+    <!--/>-->
+    <LinearLayout
+        android:id="@+id/layout_three"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="700px"
+            android:layout_height="300px"
+            android:visibility="visible"
+            android:layout_gravity="center"
+            android:orientation="vertical">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/putfinger"
+                android:id="@+id/imageView" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/layout_error_text"
+            android:layout_width="600px"
+            android:layout_height="180px"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:visibility="visible"
+            android:background="@drawable/main_botton"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/text_error"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="请按图提示操作"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:textSize="30sp"/>
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center_horizontal">
+    <!--<Button-->
+    <!--android:id="@+id/button01"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginTop="10dp"-->
+     <!--android:textSize="30sp"-->
+     <!--android:layout_marginLeft="20dp"-->
+    <!--android:text="配置1gpio" />-->
+        <Button
+            android:id="@+id/button02"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textSize="30sp"
+            android:textColor="@color/black"
+            android:layout_marginLeft="20dp"
+            android:text="配置2gpio" />
+    <Button
+    android:id="@+id/button1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+       android:layout_marginLeft="20dp"
+        android:textColor="@color/black"
+     android:textSize="30sp"
+    android:text="设置高电平" />
+
+    <Button
+    android:id="@+id/button2"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+      android:layout_marginTop="10dp"
+         android:layout_marginLeft="20dp"
+       android:textSize="30sp"
+        android:textColor="@color/black"
+    android:text="设置低电平" />
+    </LinearLayout>
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:gravity="center_horizontal">
+    
+    <Button
+    android:id="@+id/button3"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+      android:layout_marginTop="10dp"
+         android:layout_marginLeft="20dp"
+        android:textColor="@color/black"
+      android:textSize="30sp"
+    android:text="读取gpio状态" />
+
+	<TextView
+    android:id="@+id/textView1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"     
+     android:textSize="30sp"
+     android:textColor="@color/white"
+    android:text="" />
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="20dp"
+        android:textSize="30sp"
+        android:textColor="@color/black"
+        android:text="设备id" />
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_size_30sp"
+        android:textColor="@color/white"
+        />
+</LinearLayout>
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginBottom="10dp"
+            android:id="@+id/versionName"
+            android:textColor="@color/white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_30sp"
+            android:text=""
+            />
+    </RelativeLayout>
+</LinearLayout>
+
