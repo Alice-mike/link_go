@@ -1,8 +1,10 @@
 package com.link.cloud.utils;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.widget.Toast;
 
 import com.anupcowkur.reservoir.Reservoir;
 import com.google.gson.reflect.TypeToken;
@@ -47,7 +49,16 @@ public class Utils {
         }
         return sdf2.format(d);
     }
-
+    private static Toast mToast=null;
+    public static void showPromptToast(Context context, String promptWord) {
+        if (mToast == null) {
+            mToast = Toast.makeText(context, promptWord,
+                    Toast.LENGTH_SHORT);
+        } else {
+            mToast.setText(promptWord);
+        }
+        mToast.show();
+    }
     /**
      * 将长整型数字转换为日期格式的字符串
      *
@@ -235,7 +246,18 @@ public class Utils {
             return String.format("%04d", random.nextInt(max - min + 1) + min);
         }
     }
-
+    // 两次点击按钮之间的点击间隔不能少于500毫秒
+    private static final int MIN_CLICK_DELAY_TIME = 100;
+    private static long lastClickTime;
+    public static boolean isFastClick() {
+        boolean flag = false;
+        long curClickTime = System.currentTimeMillis();
+        if ((curClickTime - lastClickTime) >= MIN_CLICK_DELAY_TIME) {
+            flag = true;
+        }
+        lastClickTime = curClickTime;
+        return flag;
+    }
     /**
      * 验证手机号是否符合大陆的标准格式
      *

@@ -10,7 +10,7 @@ import org.greenrobot.greendao.annotation.Id;
 @Entity
 public class CabinetNumber {
     @Id(autoincrement = true)
-    private Long id;
+    private Long id;//
     String cabinetLockPlate;
     String circuitNumber;
     String cabinetNumber;

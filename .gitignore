@@ -33,3 +33,14 @@ build
 #OSX
 .DS_Store
 
+src/main/java/com/example/
+src/main/java/com/link/cloud/fragment/
+src/main/java/com/xzy/
+src/main/res/raw/
+
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+/build
+/captures
+.externalNativeBuild

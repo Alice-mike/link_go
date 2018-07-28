@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">指静脉1.1.0</string>
+    <string name="app_name">智能一体机</string>
     <string name="deviceID">请输入设备ID：</string>
     <string name="deviceCode">请输入设备密码：</string>
     <string name="confirm">确定</string>
@@ -14,7 +14,7 @@
     <string name="error_network_diable">网络异常（http）</string>
     <string name="error_response_parse">解析服务器返回数据错误</string>
     <string name="error_unkown">未捕获的异常</string>
-    <string name="error_socket_diable">网络异常（socket）</string>
+    <string name="error_socket_diable">网络已断开</string>
     <string name="digitKeyppad_ok">确定</string>
     <string name="digitKeyppad_delect">退格</string>
     <string name="digitKeyppad_zero">0</string>

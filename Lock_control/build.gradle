@@ -15,7 +15,7 @@ def releaseTime() {
     return new Date().format("yyyy_MM_dd")
 }
 android {
-    compileSdkVersion 23
+    compileSdkVersion 25
     buildToolsVersion '25.0.0'
     splits {
         abi {
@@ -29,9 +29,9 @@ android {
     defaultConfig {
         applicationId "com.link.cloud.greendaodemo"
         minSdkVersion 21
-        targetSdkVersion 23
-        versionCode 1
-        versionName "2.1.1"
+        targetSdkVersion 25
+        versionCode 229
+        versionName "2.2.9.8"
         multiDexEnabled true
         compileOptions {
             sourceCompatibility JavaVersion.VERSION_1_7
@@ -52,6 +52,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
     afterEvaluate {
         tasks.matching {
             it.name.startsWith('dex')
@@ -69,7 +70,6 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-
     //打包忽略掉第三方jar相同的文件
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES.txt'
@@ -87,6 +87,7 @@ android {
     // 这个是解决lint报错的代码
     lintOptions {
         abortOnError false
+        checkReleaseBuilds false
     }
 
     dexOptions {
@@ -96,52 +97,10 @@ android {
         preDexLibraries = false
     }
 
-    // 签名配置
-    signingConfigs {
-        config {
-            storeFile file(SIGN_KEY_PATH)
-            storePassword SIGN_KEY_STORE_PASS
-            keyAlias SIGN_KEY_ALIAS
-            keyPassword SIGN_KEY_ALIAS_PASS
-        }
-    }
-
     buildTypes {
-        debug {
-            println("====== buildTypes.debug ======")
-            signingConfig signingConfigs.config
-        }
         release {
-            println("====== buildTypes.release ======")
-            //开启或者关闭 混淆 。
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles file('proguard-rules.pro')
-            signingConfig signingConfigs.config
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-
-    }
-
-    applicationVariants.all { variant ->
-        variant.outputs.each { output ->
-            def outputFile = output.outputFile
-            if (outputFile != null && outputFile.name.endsWith('.apk')) {
-                // SoonveinCloud_Vein-pad_版本_日期_渠道名称.apk
-                def fileName = "rocketbird_柜子";
-                def flavorname = variant.productFlavors[0].name;
-                if ('soonvein'.equals(flavorname)) {
-                    fileName += "${defaultConfig.versionName}_${releaseTime()}";
-                } else {
-                    fileName += "${defaultConfig.versionName}_${releaseTime()}_${flavorname}";
-                }
-                if ('debug'.equals(variant.buildType.name)) {
-                    fileName += "_debug.apk"
-                } else {
-                    fileName += ".apk"
-                }
-                output.outputFile = new File(outputFile.parent, fileName)
-            }
         }
     }
 
@@ -181,7 +140,7 @@ buildscript {
     }
 }
 greendao {
-    schemaVersion 2
+    schemaVersion 4
     daoPackage 'com.link.cloud.greendao.gen'
     targetGenDir 'src/main/java'
 }
@@ -195,9 +154,9 @@ dependencies {
     compile files('libs/httpclient.jar')
     testCompile 'junit:junit:4.12'
     //noinspection GradleCompatible
-    compile 'com.android.support:support-v4:23.0.0'
-    compile 'com.android.support:appcompat-v7:23.0.0'
-    compile 'com.android.support:design:23.0.0'
+    compile 'com.android.support:support-v4:25.0.0'
+    compile 'com.android.support:appcompat-v7:25.0.0'
+    compile 'com.android.support:design:25.0.0'
     // Google
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.google.code.gson:gson:2.7'
@@ -226,27 +185,30 @@ dependencies {
     compile 'com.github.hijesse:android-logger:2.0.0'
     //友盟统计
     compile 'com.umeng.analytics:analytics:latest.integration'
-    compile files('D:/work/S1VipManages-master/native/libs/android-support-multidex.jar')
+//    compile files('D:/work/S1VipManages-master/native/libs/android-support-multidex.jar')
     compile files('libs/android-support-multidex.jar')
     compile files('libs/com.baidu.tts_2.3.0.jar')
-    compile files('D:/work/S1VipManages-master_0511_2/S1VipManages-master/native/libs/com.baidu.tts_2.3.0.jar')
+//    compile files('D:/work/S1VipManages-master_0511_2/S1VipManages-master/native/libs/com.baidu.tts_2.3.0.jar')
     compile files('libs/Msc.jar')
     compile 'com.google.android.gms:play-services-appindexing:8.4.0'
     compile files('libs/armeabi-v7a/mockable-android-24.jar')
     compile files('libs/alicloud-android-push-sdk-3.0.12.jar')
     //添加gif动图
     compile 'pl.droidsonroids.gif:android-gif-drawable:1.2.6'
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
 
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    compile 'com.android.support:appcompat-v7:23.1.1'
     testCompile 'junit:junit:4.12'
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     testCompile 'junit:junit:4.12'
+    compile 'org.greenrobot:eventbus:3.0.0'
     compile 'org.greenrobot:greendao:3.2.0'
     compile 'org.greenrobot:greendao-generator:3.2.0'
-    compile group: 'com.alibaba', name: 'fastjson', version: '1.2.12'
+    compile 'com.alibaba:fastjson:1.2.12'
+    compile files('libs/apache-commons-lang.jar')
+    compile 'com.tencent.bugly:crashreport:latest.release'
+    compile 'com.tencent.bugly:nativecrashreport:latest.release'
 }

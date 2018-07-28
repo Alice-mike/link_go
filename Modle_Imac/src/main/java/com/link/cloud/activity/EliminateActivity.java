@@ -23,6 +23,7 @@ import android.widget.TextView;
 import com.link.cloud.BaseApplication;
 import com.link.cloud.R;
 import com.link.cloud.bean.UserInfo;
+import com.link.cloud.fragment.LessonFragment_test;
 import com.link.cloud.fragment.Select_Lesson;
 import com.link.cloud.greendao.gen.PersonDao;
 import com.link.cloud.greendaodemo.Person;
@@ -58,7 +59,7 @@ public class EliminateActivity extends BaseAppCompatActivity implements CallBack
     @Bind(R.id.layout_page_title)
     TextView tvTitle;
     @Bind(R.id.home_back_bt)
-    TextView home_back;
+    LinearLayout home_back;
     @Bind(R.id.bind_one_Cimg)
     ImageView bind_one_Cimg;
     @Bind(R.id.bind_one_line)
@@ -110,7 +111,6 @@ public class EliminateActivity extends BaseAppCompatActivity implements CallBack
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
-
 //        mediaPlayer0=MediaPlayer.create(this,R.raw.putfinger_member);
 //        mediaPlayer1=MediaPlayer.create(this,R.raw.select_lesson);
 //        mediaPlayer2=MediaPlayer.create(this,R.raw.sign_success);
@@ -203,7 +203,6 @@ public class EliminateActivity extends BaseAppCompatActivity implements CallBack
                     userInfo.setUid(users.get(0).getUid());
                     userInfo.setSex(users.get(0).getSex());
 //                    LessonFragment_test fragment = LessonFragment_test.newInstance(userInfo);
-                    //签到
 //                    ((EliminateActivity) this.getParentFragment()).addFragment(fragment, 1);
                     break;
                 case 2:
@@ -263,13 +262,10 @@ public class EliminateActivity extends BaseAppCompatActivity implements CallBack
         viewPager.setAdapter(mfpa);
         viewPager.setCurrentItem(0);
     }
-    @Override
-    public void onBackPressed() {
-    }
+
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void initData() {
-
         mesReceiver=new MesReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_UPDATEUI);
@@ -305,7 +301,6 @@ public class EliminateActivity extends BaseAppCompatActivity implements CallBack
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         if (runnable!=null) {
             handler.removeCallbacks(runnable);
         }
@@ -331,13 +326,16 @@ public class EliminateActivity extends BaseAppCompatActivity implements CallBack
     public void onClick(View view){
         switch (view.getId()){
             case R.id.home_back_bt:
-
                 Intent intent=new Intent();
                 intent.setClass(this,NewMainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
                 finish();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
     }
     /**
      * 广播接收器

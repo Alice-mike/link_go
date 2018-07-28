@@ -18,7 +18,9 @@ public class UserInfo extends ResultResponse{
     @SerializedName("img")
     String img;
     @SerializedName("userType")
-    int userType;
+    String userType;
+    @SerializedName("feature")
+    String feature;
 
     public void setPhone(String phone) {
         this.phone = phone;
@@ -40,8 +42,12 @@ public class UserInfo extends ResultResponse{
         this.img = img;
     }
 
-    public void setUserType(int userType) {
+    public void setUserType(String userType) {
         this.userType = userType;
+    }
+
+    public String getFeature() {
+        return feature;
     }
 
     public String getPhone() {
@@ -56,7 +62,7 @@ public class UserInfo extends ResultResponse{
         return img;
     }
 
-    public int getUserType() {
+    public String getUserType() {
         return userType;
     }
 

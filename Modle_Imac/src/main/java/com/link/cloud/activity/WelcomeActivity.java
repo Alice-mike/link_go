@@ -1,20 +1,27 @@
 package com.link.cloud.activity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.link.cloud.BaseApplication;
 import com.link.cloud.R;
 import com.link.cloud.constant.Constant;
 import com.link.cloud.greendao.gen.PersonDao;
+import com.link.cloud.greendaodemo.Person;
 import com.link.cloud.utils.ReservoirUtils;
 import com.link.cloud.utils.Utils;
+import com.link.cloud.view.ExitAlertDialogshow;
 
+import java.util.List;
 
 
 /**
@@ -25,7 +32,9 @@ public class WelcomeActivity extends Activity {
     SharedPreferences userInfo;
     String deviceID,devicePWD;
     PersonDao personDao;
-
+    BaseApplication baseApplication;
+    ExitAlertDialogshow exitAlertDialogshow;
+    ConnectivityManager connectivityManager;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,19 +44,52 @@ public class WelcomeActivity extends Activity {
         /**标题是属于View的，所以窗口所有的修饰部分被隐藏后标题依然有效,需要去掉标题**/
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_welcome);
-        handler.sendEmptyMessageDelayed(0,3000);
+
         //创建桌面快捷方式
         if (!Utils.shortcut2DesktopCreated()) {
             //Logger.e("创建桌面快捷方式");
             createShortcutToDesktop();
         }
-//        initial();
+       Intent intent = new Intent(this, WorkService.class);
+        startService(intent);
+        baseApplication=(BaseApplication)getApplication();
+        exitAlertDialogshow=new ExitAlertDialogshow(this);
+        exitAlertDialogshow.setCanceledOnTouchOutside(false);
+        exitAlertDialogshow.setCancelable(false);
+        baseApplication.setDownLoadListner(new BaseApplication.downloafinish() {
+            @Override
+            public void finish() {
+                exitAlertDialogshow.dismiss();
+                handler.sendEmptyMessageDelayed(0,3000);
+            }
+            @Override
+            public void start() {
+//                if(exitAlertDialogshow.isShowing()){
+//                }else {
+//                    exitAlertDialogshow.show();
+//                }
+            }
+        });
+        WorkService.setActactivity(this);
+        connectivityManager =(ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+        NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+        if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+            PersonDao personDao=BaseApplication.getInstances().getDaoSession().getPersonDao();
+            List<Person> list=personDao.loadAll();
+            if(list.size()==0) {
+                exitAlertDialogshow.show();
+            }else {
+                handler.sendEmptyMessageDelayed(0,3000);
+            }
+        }else {
+            handler.sendEmptyMessageDelayed(0,3000);
+        }
     }
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            getHome();
             super.handleMessage(msg);
+            getHome();
         }
     };
 

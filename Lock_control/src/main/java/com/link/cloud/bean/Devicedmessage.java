@@ -9,8 +9,18 @@ import com.google.gson.annotations.SerializedName;
 public class Devicedmessage extends ResultResponse{
     @SerializedName("deviceId")
     String deviceId;
+    @SerializedName("useSign")
+    boolean useSign;
     @SerializedName("numberType")
     int numberType;
+
+    public void setUseSign(Boolean useSign) {
+        this.useSign = useSign;
+    }
+
+    public Boolean getUseSign() {
+        return useSign;
+    }
 
     public void setDeviceId(String deviceId) {
         this.deviceId = deviceId;

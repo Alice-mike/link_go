@@ -82,7 +82,6 @@ public class RegisterFragment_Two extends BaseFragment {
     public static RegisterFragment_Two newInstance(Member memberInfo) {
         RegisterFragment_Two fragment = new RegisterFragment_Two();
         Bundle args = new Bundle();
-
         args.putSerializable(Constant.EXTRAS_MEMBER, memberInfo);
         fragment.setArguments(args);
         return fragment;
@@ -124,20 +123,21 @@ public class RegisterFragment_Two extends BaseFragment {
         if (bundle != null) {
             mMemberInfo = (Member) bundle.getSerializable(Constant.EXTRAS_MEMBER);
             userInfo = acitvity.getSharedPreferences("user_info_bind", 0);
-            userInfo.edit().putInt("userType",mMemberInfo.getMemberdata().getUserInfo().getUserType()).commit();
+            userInfo.edit().putString("userType",mMemberInfo.getMemberdata().getUserInfo().getUserType()).commit();
             userInfo.edit().putString("uid",mMemberInfo.getMemberdata().getUserInfo().getUid()).commit();
             userInfo.edit().putString("numberValue",mMemberInfo.getMemberdata().getUserInfo().getPhone()).commit();
             userInfo.edit().putInt("sex",mMemberInfo.getMemberdata().getUserInfo().getSex()).commit();
             userInfo.edit().putString("img",mMemberInfo.getMemberdata().getUserInfo().getImg());
             userInfo.edit().putString("name",mMemberInfo.getMemberdata().getUserInfo().getName()).commit();
-            if (mMemberInfo.getMemberdata().getUserInfo().getUserType()==0){
-                user_Type.setText("会员");
-            }else if (mMemberInfo.getMemberdata().getUserInfo().getUserType()==1)
+            if ("1".equals(mMemberInfo.getMemberdata().getUserInfo().getUserType()))
             {
-                user_Type.setText("工作人员");
-            }else if(mMemberInfo.getMemberdata().getUserInfo().getUserType()==2){
-                user_Type.setText("教练");
+                user_Type.setText(R.string.member);
+            }else if("2".equals(mMemberInfo.getMemberdata().getUserInfo().getUserType())){
+                user_Type.setText(R.string.employee);
             }
+//            else if(mMemberInfo.getMemberdata().getUserInfo().getUserType()==2){
+//                user_Type.setText("教练");
+//            }
             menber_name.setText(mMemberInfo.getMemberdata().getUserInfo().getName());
             String phoneNum =mMemberInfo.getMemberdata().getUserInfo().getPhone();
             if (mMemberInfo.getMemberdata().getUserInfo().getPhone().length() == 11) {
@@ -145,9 +145,9 @@ public class RegisterFragment_Two extends BaseFragment {
             }
             menber_phone.setText(phoneNum);
             if (mMemberInfo.getMemberdata().getUserInfo().getSex()!=0){
-                menber_sex.setText("女");
+                menber_sex.setText(R.string.girl);
             }else {
-                menber_sex.setText("男");
+                menber_sex.setText(R.string.man);
             }
             if (mMemberInfo.getMemberdata().getMemberCard()!=null) {
                 cardtype.setText(mMemberInfo.getMemberdata().getMemberCard().getCardName());

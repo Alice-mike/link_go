@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.media.MediaPlayer;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -19,6 +21,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.link.cloud.BuildConfig;
 import com.link.cloud.R;
@@ -103,8 +106,6 @@ public class RegisterFragment_One extends BaseFragment implements RegisterTaskCo
     //用户保存手机号码与验证码，获取验证码成功添加一条记录，点击下一步删除一条记录
     private static final HashSet verifySet = new HashSet();
     //记录当前用户信息
-
-
     private NextAction action = NextAction.GET_MEMBER_INFO;
     private Context context;
     BindAcitvity bindActivity;
@@ -124,6 +125,7 @@ public class RegisterFragment_One extends BaseFragment implements RegisterTaskCo
         super.onCreate(savedInstanceState);
 //        mPlayer=MediaPlayer.create(getActivity(),R.raw.error_phone);
 //        mPlayer1=MediaPlayer.create(getActivity(),R.raw.error_verify);
+
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -305,19 +307,25 @@ public class RegisterFragment_One extends BaseFragment implements RegisterTaskCo
                             cancel = true;
                             break;
                         }
-                        this.showProgress(true);
+                        showProgress(true);
                         userInfo = acitvity.getSharedPreferences("user_info", 0);
                         deviceID = userInfo.getString("deviceId", "");
                         numberType=userInfo.getInt("numberType",0);
                         Logger.e("RegisterFragment_OnedeviceID");
-                        this.showProgress(true);
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                presenter.getMemInfo(deviceID,numberType,phoneNum);
-                            }
-                        }).start();
-
+                        showProgress(true);
+                        ConnectivityManager connectivityManager;
+                        connectivityManager =(ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+                        NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+                        if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    presenter.getMemInfo(deviceID, numberType, phoneNum);
+                                }
+                            }).start();
+                        }else {
+                            Toast.makeText(getContext(),"网络已断开，请检查网络",Toast.LENGTH_LONG).show();
+                        }
                         break;
 
                 }
@@ -425,7 +433,6 @@ public class RegisterFragment_One extends BaseFragment implements RegisterTaskCo
     class Verfiy {
         private String phone;
         private String verifyCode;
-
         public Verfiy(String phone, String verifyCode) {
             this.phone = phone;
             this.verifyCode = verifyCode;
@@ -443,7 +450,6 @@ public class RegisterFragment_One extends BaseFragment implements RegisterTaskCo
         public int hashCode() {
             return (phone + verifyCode).hashCode();
         }
-
         @Override
         public String toString() {
             return "Verfiy{" +

@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="线路号"
+            android:text="@string/route_no"
             android:textColor="@color/black"
             android:textSize="@dimen/text_size_20sp"
             android:gravity="center"
@@ -23,14 +23,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="@dimen/text_size_20sp"
-            android:text="锁板号"
+            android:text="@string/plate_num"
             android:textColor="@color/black"
             android:gravity="center"
             android:layout_weight="1" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="柜号"
+            android:text="@string/cabinet_num"
             android:textSize="@dimen/text_size_20sp"
             android:textColor="@color/black"
             android:gravity="center"
@@ -38,7 +38,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="状态"
+            android:text="@string/stating"
             android:textColor="@color/black"
             android:textSize="@dimen/text_size_20sp"
             android:gravity="center"

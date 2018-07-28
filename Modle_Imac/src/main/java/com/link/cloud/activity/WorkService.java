@@ -8,6 +8,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -25,9 +26,16 @@ import android.widget.Toast;
 
 import com.alibaba.sdk.android.push.AliyunMessageIntentService;
 import com.alibaba.sdk.android.push.notification.CPushMessage;
+import com.iflytek.cloud.SpeechConstant;
+import com.iflytek.cloud.SpeechUtility;
 import com.link.cloud.BaseApplication;
+import com.link.cloud.R;
+import com.link.cloud.base.ApiException;
+import com.link.cloud.bean.ResultHeartBeat;
 import com.link.cloud.contract.BindTaskContract;
+import com.link.cloud.contract.DeviceHeartBeatContract;
 import com.link.cloud.greendao.gen.PersonDao;
+import com.link.cloud.utils.FileUtils;
 import com.link.cloud.view.ProgressHUD;
 import com.orhanobut.logger.Logger;
 
@@ -50,7 +58,7 @@ import static com.link.cloud.component.MyMessageReceiver.REC_TAG;
  * 3. 调用接口CloudPushService.setPushIntentService
  * 详细用户可参考:https://help.aliyun.com/document_detail/30066.html#h2-2-messagereceiver-aliyunmessageintentservice
  */
-public class WorkService extends AliyunMessageIntentService {
+public class WorkService extends AliyunMessageIntentService implements DeviceHeartBeatContract.Devicehearbeat{
     BindTaskContract bindTaskContract;
     Handler handler=new Handler();
     private ConnectivityManager connectivityManager;//用于判断是否有网络
@@ -62,18 +70,25 @@ public class WorkService extends AliyunMessageIntentService {
     static Application application;
     private static UsbManager mUsbManager;
     static Activity activity=null;
+    DeviceHeartBeatContract deviceHeartBeatContract;
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     @Override
     public void onCreate() {
         super.onCreate();
+        deviceHeartBeatContract=new DeviceHeartBeatContract();
+        deviceHeartBeatContract.attachView(this);
+        Logger.e("WorkService"+"onCreate");
+
 //        reflectActivity();
     }
+
     public static void setActactivity(Activity actactivity) {
         activity = actactivity;
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         new TimeThread().start();
+        new HeartBeatThread().start();
         return Service.START_STICKY;
     }
     @Override
@@ -86,6 +101,7 @@ public class WorkService extends AliyunMessageIntentService {
     }
     @Override
     public void onDestroy() {
+        microFingerVein.close();
         super.onDestroy();
     }
     private void network(){
@@ -106,16 +122,37 @@ public class WorkService extends AliyunMessageIntentService {
         }
         mToast.show();
     }
-    int cnt;
-    NewMainActivity mainActivity;
+//    int cnt;
+//    NewMainActivity mainActivity;
     private void checkMD(){
+//        SharedPreferences user_ret1=getSharedPreferences("user_info",0);
+//        ret=user_ret1.getBoolean("ret_service",false);
         if (activity!=null&&ret!=true) {
             microFingerVein = MicroFingerVein.getInstance(activity);
             int devicecount=microFingerVein.fvdev_get_count();
             if (devicecount!=0) {
                 ret = microFingerVein.fvdev_open();
+//                SharedPreferences user_ret=getSharedPreferences("user_info",0);
+//                user_ret.edit().putBoolean("ret_service",ret);
+//                Logger.e("WorkService"+"devicecount"+devicecount + "=====================" + ret);
             }
-            Logger.e("WorkService"+"devicecount"+devicecount + "=====================" + ret);
+        }
+    }
+    Boolean isfirst=true;
+    public class HeartBeatThread extends Thread{
+        @Override
+        public void run() {
+            do {
+//                try {
+//                    Thread.sleep(180000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                if (!"".equals(FileUtils.loadDataFromFile(activity,"deviceId.text"))) {
+//                    deviceHeartBeatContract.deviceUpgrade(FileUtils.loadDataFromFile(activity,"deviceId.text"));
+//                }
+            }while (true);
+
         }
     }
     public class TimeThread extends Thread {
@@ -123,6 +160,8 @@ public class WorkService extends AliyunMessageIntentService {
         public void run() {
             do {
                 checkMD();
+                if(isfirst){
+                    isfirst=false;
                 try {
                     Thread.sleep(1000);
                     Message msg = new Message();
@@ -134,6 +173,7 @@ public class WorkService extends AliyunMessageIntentService {
                 Message msg = new Message();
                 msg.what = 2;
                 mHandler.sendMessage(msg);
+                }
             } while (true);
         }
         private Handler mHandler = new Handler() {
@@ -149,6 +189,7 @@ public class WorkService extends AliyunMessageIntentService {
                         intent.putExtra("timeStr",getTime());
                         intent.putExtra("timeData",getData());
                         sendBroadcast(intent);
+                        mHandler.sendEmptyMessageDelayed(1,1000);
                         break;
                     case MicroFingerVein.USB_HAS_REQUST_PERMISSION:
                     {
@@ -172,11 +213,8 @@ public class WorkService extends AliyunMessageIntentService {
                     break;
                     case MicroFingerVein.USB_DISCONNECT:{
 //                        ret=false;
-                        //--------------------------
 //                        deviceTouchState=2;
 //                        handler.obtainMessage(MSG_SHOW_LOG,"device disconnected.");
-                        //--------------------------
-                        microFingerVein.close();
 //                        bopen=false;
 //                        bt_model.setText("开始建模");
 //                        bt_identify.setText("开始认证");
@@ -276,7 +314,26 @@ public class WorkService extends AliyunMessageIntentService {
         }
     }
 
-//    private PersonDao personDao;
+    @Override
+    public void onError(ApiException e) {
+
+    }
+
+    @Override
+    public void onPermissionError(ApiException e) {
+
+    }
+
+    @Override
+    public void onResultError(ApiException e) {
+
+    }
+
+    @Override
+    public void deviceHearBeat(ResultHeartBeat deviceHeartBeat) {
+
+    }
+    //    private PersonDao personDao;
 //    byte[] featuer = null;
 //    int i=0;
 //    void  executeSql() {
@@ -373,7 +430,7 @@ public class WorkService extends AliyunMessageIntentService {
     @Override
     protected void onMessage(Context context, CPushMessage cPushMessage) {
         Log.i(REC_TAG,"收到一条推送消息 ： " + cPushMessage.getTitle()+cPushMessage.getTraceInfo()+", content:" + cPushMessage.getContent());
-        BaseApplication.setConsoleText(cPushMessage.getTitle() + ", content:" + cPushMessage.getContent());
+        BaseApplication.setConsoleText( cPushMessage.getContent());
     }
     /**
      * 从通知栏打开通知的扩展处理

@@ -18,16 +18,16 @@ public class Down_UserInfo extends ResultResponse{
     @SerializedName("deviceId")
     String deviceId;
     @SerializedName("fingerId")
-    int fingerId;
+    String fingerId;
     @SerializedName("feature")
     String feature;
 
-    public int getFingerId() {
-        return fingerId;
+    public void setFingerId(String fingerId) {
+        this.fingerId = fingerId;
     }
 
-    public void setFingerId(int fingerId) {
-        this.fingerId = fingerId;
+    public String getFingerId() {
+        return fingerId;
     }
 
     public void setUid(String uid) {

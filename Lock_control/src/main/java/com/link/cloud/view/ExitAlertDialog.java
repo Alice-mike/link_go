@@ -36,7 +36,7 @@ public class ExitAlertDialog extends Dialog {
     public void show() {
         edit_layout.setVisibility(View.GONE);
         button_layout.setVisibility(View.GONE);
-        texttilt.setText("请稍后...正在同步数据中");
+        texttilt.setText(R.string.sysn_data_img);
         super.show();
     }
 

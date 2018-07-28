@@ -7,6 +7,8 @@ import com.google.gson.annotations.SerializedName;
  */
 
 public class PushMessage extends ResultResponse {
+    @SerializedName("type")
+    String type;
     @SerializedName("uid")
     String uid;
     @SerializedName("shopId")
@@ -17,6 +19,14 @@ public class PushMessage extends ResultResponse {
     String appid;
     @SerializedName("messageId")
     String messageId;
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getType() {
+        return type;
+    }
 
     public void setShopId(String shopId) {
         this.shopId = shopId;

@@ -38,7 +38,7 @@ public class BaseApi {
     //长缓存有效期为7天
     public static final int CACHE_STALE_LONG = 60 * 60 * 24 * 7;
     public static BaseApi getInstance() {
-//        if (ourInstance == null)
+        if (ourInstance == null)
             ourInstance = new BaseApi();
         return ourInstance;
     }
@@ -53,20 +53,21 @@ public class BaseApi {
         this.baseService = retrofit.create(BaseService.class);
     }
     private void initOkHttpClient() {
-        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+//        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+//        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         if (mOkHttpClient == null) {
             synchronized (BaseApi.class) {
                 if (mOkHttpClient == null) {
                     // 指定缓存路径,缓存大小100Mb
                     Cache cache = new Cache(new File(BaseApplication.getInstance().getApplicationContext().getCacheDir(), "HttpCache"),
                             1024 * 1024 * 100);
-                    mOkHttpClient = new OkHttpClient.Builder()
+                    mOkHttpClient = new OkHttpClient
+                            .Builder()
+                            .retryOnConnectionFailure(false)
                             .cache(cache)
                             .addInterceptor(mRewriteCacheControlInterceptor)
                             .addNetworkInterceptor(mRewriteCacheControlInterceptor)
-                            .addInterceptor(interceptor)
-//                            .retryOnConnectionFailure(true)
+//                            .addInterceptor(interceptor)
                             .connectTimeout(20, TimeUnit.SECONDS)
                             .readTimeout(20, TimeUnit.SECONDS)//设置读取超时时间
                             .writeTimeout(20, TimeUnit.SECONDS)//设置写入超时时间
@@ -114,17 +115,17 @@ public class BaseApi {
             long t2 = System.nanoTime();
             double time = (t2 - t1) / 1e6d;
 
-            if (BaseApplication.getInstance().log) {
-                if (request.method().equals("GET")) {
-                    Logger.e(String.format("GET " + F_REQUEST_WITHOUT_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), originalResponse.code(), originalResponse.headers()));
-                } else if (request.method().equals("POST")) {
-                    Logger.e(String.format("POST " + F_REQUEST_WITH_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), postBody.toString(), originalResponse.code(), originalResponse.headers()));
-                } else if (request.method().equals("PUT")) {
-                    Logger.e(String.format("PUT " + F_REQUEST_WITH_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), postBody.toString(), originalResponse.code(), originalResponse.headers()));
-                } else if (request.method().equals("DELETE")) {
-                    Logger.e(String.format("DELETE " + F_REQUEST_WITHOUT_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), originalResponse.code(), originalResponse.headers()));
-                }
-            }
+//            if (BaseApplication.getInstance().log) {
+//                if (request.method().equals("GET")) {
+//                    Logger.e(String.format("GET " + F_REQUEST_WITHOUT_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), originalResponse.code(), originalResponse.headers()));
+//                } else if (request.method().equals("POST")) {
+//                    Logger.e(String.format("POST " + F_REQUEST_WITH_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), postBody.toString(), originalResponse.code(), originalResponse.headers()));
+//                } else if (request.method().equals("PUT")) {
+//                    Logger.e(String.format("PUT " + F_REQUEST_WITH_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), postBody.toString(), originalResponse.code(), originalResponse.headers()));
+//                } else if (request.method().equals("DELETE")) {
+//                    Logger.e(String.format("DELETE " + F_REQUEST_WITHOUT_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), originalResponse.code(), originalResponse.headers()));
+//                }
+//            }
             return originalResponse;
         }
 

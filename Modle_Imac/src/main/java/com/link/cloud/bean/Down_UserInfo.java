@@ -11,8 +11,15 @@ public class Down_UserInfo extends ResultResponse {
     String uid;
     @SerializedName("userName")
     String userName;
+    @SerializedName("userType")
+    String userType;
+    @SerializedName("number_type")
+    String number_type;
+    @SerializedName("number_value")
+    String number_value;
     @SerializedName("appid")
     String appid;
+//    @SerializedName("")
     @SerializedName("shopId")
     String shoId;
     @SerializedName("deviceId")
@@ -21,6 +28,30 @@ public class Down_UserInfo extends ResultResponse {
     int fingerId;
     @SerializedName("feature")
     String feature;
+
+    public void setNumber_type(String number_type) {
+        this.number_type = number_type;
+    }
+
+    public String getNumber_type() {
+        return number_type;
+    }
+
+    public void setUserType(String userType) {
+        this.userType = userType;
+    }
+
+    public String getUserType() {
+        return userType;
+    }
+
+    public void setNumber_value(String number_value) {
+        this.number_value = number_value;
+    }
+
+    public String getNumber_value() {
+        return number_value;
+    }
 
     public int getFingerId() {
         return fingerId;
@@ -70,12 +101,9 @@ public class Down_UserInfo extends ResultResponse {
     public String getAppid() {
         return appid;
     }
-
     public String getFeature() {
         return feature;
     }
-
-
     public String getShoId() {
         return shoId;
     }

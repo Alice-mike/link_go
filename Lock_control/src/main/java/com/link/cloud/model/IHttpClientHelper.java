@@ -1,21 +1,18 @@
 package com.link.cloud.model;
 
-import com.google.gson.JsonObject;
 import com.link.cloud.bean.CabinetNumberData;
-import com.link.cloud.bean.CodeInfo;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DeviceData;
+import com.link.cloud.bean.PagesInfoBean;
+import com.link.cloud.bean.ResultHeartBeat;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.Lockdata;
-import com.link.cloud.bean.MessagetoJson;
 import com.link.cloud.bean.ResultResponse;
+import com.link.cloud.bean.Sign_data;
+import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
-import com.link.cloud.bean.UserResponse;
-import com.link.cloud.bean.LessonResponse;
-import com.link.cloud.bean.Member;
 import com.link.cloud.bean.RestResponse;
-import com.link.cloud.bean.ReturnBean;
-import com.link.cloud.bean.SignedResponse;
-import com.link.cloud.bean.Voucher;
 
 import rx.Observable;
 
@@ -23,20 +20,44 @@ import rx.Observable;
  * Created by Shaozy on 2016/8/10.
  */
 public interface IHttpClientHelper {
-
-
     /**
      *
      * @param deviceID  设备ID
      * @return
      */
     Observable<UpdateMessage>deviceUpgrade(String deviceID);
+
     /**
      *
+     * @param openType
+     * @param deviceId
+     * @param qrCodeStr
+     * @return
+     */
+    Observable<Code_Message>openCabinetByQrCode(int openType,String deviceId,String qrCodeStr);
+    /**
+     * 心跳接口
+     * @param deviceId
+     * @return
+     */
+    Observable<ResultHeartBeat>deviceHeartBeat(String deviceId);
+    /**
      * @param deviceTargetValue
      * @return
      */
     Observable<DeviceData>getdeviceID(String deviceTargetValue,int deviceType);
+    /**
+     * 发送日志信息
+     * @param deviceId
+     * @param uid
+     * @param uids
+     * @param feature
+     * @param time
+     * @param scope
+     * @param result
+     * @return
+     */
+    Observable<RestResponse> sendLogMessage(String deviceId, String uid,String uids,String feature,String time,String scope, String result);
 
     /**
      * 储物柜操作
@@ -47,6 +68,7 @@ public interface IHttpClientHelper {
      * @return
      */
     Observable<Lockdata>isOpenCabinet(int openType, String deviceId, String uid, String fromType);
+
 
     /**
      * 清除储物柜使用信息
@@ -83,9 +105,34 @@ public interface IHttpClientHelper {
     Observable<DownLoadData>syncUserFeature(String deviceId);
 
     /**
+     * 签到数据同步
+     * @param deviceId
+     * @return
+     */
+    Observable<Sign_data>syncSignUserFeature(String deviceId);
+
+    /**
      * 查询柜号列表
      * @param deviceId
      * @return
      */
     Observable<CabinetNumberData>cabinetNumberList(String deviceId);
+
+    /**
+     *
+     * @param deviceId
+     * @return
+     */
+    Observable<DownLoadData>downloadNotReceiver(String deviceId);
+
+    /**
+     *
+     * @param deviceId
+     * @return
+     */
+    Observable<UpDateBean>appUpdateInfo (String deviceId);
+
+    Observable<PagesInfoBean> getPagesInfo(String deviceId);
+
+    Observable<SyncFeaturesPage> syncUserFeaturePages(String deviceId, int currentPage);
 }

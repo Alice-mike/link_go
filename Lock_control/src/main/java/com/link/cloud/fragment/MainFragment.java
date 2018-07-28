@@ -27,15 +27,21 @@ import com.hotelmanager.xzy.util.OpenDoorUtil;
 import com.link.cloud.BaseApplication;
 import com.link.cloud.R;
 import com.link.cloud.activity.LockActivity;
+import com.link.cloud.activity.WelcomeActivity;
 import com.link.cloud.activity.WorkService;
 import com.link.cloud.base.ApiException;
 import com.link.cloud.bean.CabinetNumberData;
 import com.link.cloud.bean.DownLoadData;
+import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.ResultResponse;
+import com.link.cloud.bean.Sign_data;
+import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.constant.Constant;
 import com.link.cloud.contract.AdminopenCabinet;
 import com.link.cloud.contract.CabinetNumberContract;
 import com.link.cloud.contract.ClearCabinetContract;
+import com.link.cloud.contract.DownloadFeature;
 import com.link.cloud.contract.SyncUserFeature;
 import com.link.cloud.core.BaseFragment;
 import com.link.cloud.greendao.gen.CabinetNumberDao;
@@ -50,17 +56,21 @@ import com.link.cloud.greendaodemo.Person;
 import com.link.cloud.greendaodemo.SignUser;
 //import com.link.cloud.utils.CountDownTimer;
 import com.link.cloud.utils.APKVersionCodeUtils;
+import com.link.cloud.utils.FileUtil;
 import com.link.cloud.utils.FileUtils;
 import com.link.cloud.utils.ToastUtils;
 import com.link.cloud.utils.Utils;
 import com.link.cloud.view.CheckUsedRecored;
+import com.link.cloud.view.ExitAlertDialog;
 import com.link.cloud.view.LockMessage;
 import com.orhanobut.logger.Logger;
 
 import org.greenrobot.greendao.query.QueryBuilder;
+import org.greenrobot.greendao.query.WhereCondition;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import android_serialport_api.SerialPort;
@@ -71,7 +81,7 @@ import butterknife.OnClick;
 /**
  * Created by 30541 on 2018/3/28.
  */
-public class MainFragment1 extends BaseFragment implements AdminopenCabinet.adminopen,ClearCabinetContract.clearCabinet,SyncUserFeature.syncUser,CabinetNumberContract.cabinetNumber{
+public class MainFragment extends BaseFragment implements AdminopenCabinet.adminopen,DownloadFeature.download,ClearCabinetContract.clearCabinet,SyncUserFeature.syncUser,CabinetNumberContract.cabinetNumber{
     private EditText etPwd;
     private Button btCancel;
     private Button btConfirm;
@@ -115,21 +125,24 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
     OpenDoorUtil openDoorUtil;
     MesReceiver mesReceiver;
     LockActivity activity;
-    ExitAlertDialog exitAlertDialog;
+    ExitAlertDialog1 exitAlertDialog1;
     public static boolean isStart=false;
     CabinetNumberContract cabinetNumberContract;
+    ConnectivityManager connectivityManager;//用于判断是否有网络
     WorkService workService;
     String opentime=null;
     String pwdmodel="0";
     SerialPort serialPort;
-    boolean isClearnAll=false,isClearnOther=false;
+    DownloadFeature downloadFeature;
+    boolean cleanOther=false,cleanAll=false;//清柜开关
+    boolean openOther=false,openAll=false;
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.activity=(LockActivity) activity;
     }
-    public static MainFragment1 newInstance() {
-        MainFragment1 fragment = new MainFragment1();
+    public static MainFragment newInstance() {
+        MainFragment fragment = new MainFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -145,12 +158,14 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
         syncUserFeature.attachView(this);
         cabinetNumberContract=new CabinetNumberContract();
         cabinetNumberContract.attachView(this);
+        downloadFeature=new DownloadFeature();
+        downloadFeature.attachView(this);
         openDoorUtil=new OpenDoorUtil();
         SharedPreferences sharedPreferences=activity.getSharedPreferences("user_info",0);
        String pwd= sharedPreferences.getString("devicepwd",null);
         if (pwd==null){
             sharedPreferences.edit().putString("devicepwd","888888").commit();
-            Logger.e("MainFragment1========="+"devicepwd");
+            Logger.e("MainFragment========="+"devicepwd");
         }
     }
     @Override
@@ -163,14 +178,14 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
         CabinetNumberDao cabinetCountDao=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
         QueryBuilder qb=cabinetCountDao.queryBuilder();
         List<CabinetNumber>listcount=cabinetCountDao.loadAll();
-        List<CabinetNumber>listuser=qb.where(CabinetNumberDao.Properties.IsUser.eq("占用")).list();
-        text_num1.setText("全部"+listcount.size());
-        text_num2.setText("已用"+listuser.size());
-        text_num3.setText("剩余"+(listcount.size()-listuser.size()));
+        List<CabinetNumber>listuser=qb.where(CabinetNumberDao.Properties.IsUser.eq(getResources().getString(R.string.isuser))).list();
+        text_num1.setText(getResources().getString(R.string.cabinet_all)+listcount.size());
+        text_num2.setText(getResources().getString(R.string.cabinet_isuser)+listuser.size());
+        text_num3.setText(getResources().getString(R.string.cabinet_leave)+(listcount.size()-listuser.size()));
 //        time_out();
 //        timer.start();
         activity.bRun=true;
-//        Logger.e("MainFragment1===="+"count=="+listcount.size()+"used=="+listuser.size()+"surplus=="+(listcount.size()-listuser.size()));
+//        Logger.e("MainFragment===="+"count=="+listcount.size()+"used=="+listuser.size()+"surplus=="+(listcount.size()-listuser.size()));
     }
     @Override
     protected int getLayoutId() {
@@ -188,12 +203,27 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
             @Override
             public boolean onLongClick(View v) {
                 pwdmodel="1";
-                exitAlertDialog=new ExitAlertDialog(getContext());
-                exitAlertDialog.show();
+                exitAlertDialog1=new ExitAlertDialog1(getContext());
+                exitAlertDialog1.show();
                 return false;
             }
         });
     }
+//    CountDownTimer timer;
+//    private void time_out() {
+//        /**
+//         * 倒计时60秒，一次1秒
+//         */
+//        timer = new CountDownTimer(40 * 1000, 1000) {
+//            @Override
+//            public void onTick(long millisUntilFinished) {
+//                Logger.e("ThirdFragment"+millisUntilFinished / 1000);
+//            }
+//            @Override
+//            public void onFinish() {
+//            }
+//        };
+//    }
     @Override
     protected void onVisible() {
     }
@@ -201,91 +231,106 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
     protected void onInvisible() {
     }
     @OnClick({R.id.main_bt_01,R.id.main_bt_02,R.id.chang_pdw,R.id.main_bt_03,R.id.head_text_02,R.id.clean_other,R.id.clean_all,R.id.openlock_all,
-            R.id.openlock_other,R.id.openlock_button,R.id.back,R.id.head_text_03_main,R.id.button4,R.id.record_button,R.id.lock_message})
+            R.id.openlock_other,R.id.openlock_button,R.id.back_home,R.id.back,R.id.head_text_03_main,R.id.button4,R.id.record_button,R.id.lock_message})
     public void Onclick(View view){
-        String device;
-
+        String device=null;
+        device=FileUtils.loadDataFromFile(getContext(),"deviceId.text");
         CheckUsedRecored checkUsedRecored;
         LockMessage lockMessage;
         CabinetNumberDao cabinetNumberDao=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
         CabinetRecordDao cabinetRecordDao=BaseApplication.getInstances().getDaoSession().getCabinetRecordDao();
         SharedPreferences user=activity.getSharedPreferences("user_info",0);
-        device= FileUtils.loadDataFromFile(activity,"deviceId.text");
-        ConnectivityManager connectivityManager;//用于判断是否有网络 connectivityManager =(ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
         connectivityManager =(ConnectivityManager)activity.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
         NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
         switch (view.getId()){
             case R.id.main_bt_01:
-                if (Utils.isFastClick()&&info!=null) {
-                    ((BindVeinMainFragment)getParentFragment()).setFragment(1);
-                }else {
-                    Toast.makeText(getActivity(),"网络已断开，请查看网络",Toast.LENGTH_LONG).show();
+                if (Utils.isFastClick()) {
+                    if (info!=null) {
+                        ((BindVeinMainFragment) getParentFragment()).setFragment(1);
+                    }else {
+                        activity.mTts.startSpeaking(getResources().getString(R.string.network_error),activity.mTtsListener);
+                        Toast.makeText(getContext(),getResources().getString(R.string.network_error),Toast.LENGTH_LONG).show();
+                    }
                 }
                 break;
             case R.id.main_bt_02:
-                if (Utils.isFastClick()&&info!=null) {
-                    ((BindVeinMainFragment)getParentFragment()).setFragment(2);
-                }else {
-                    Toast.makeText(getActivity(),"网络已断开，请查看网络",Toast.LENGTH_LONG).show();
+                if (Utils.isFastClick()) {
+                    if (info != null) {
+                        ((BindVeinMainFragment) getParentFragment()).setFragment(2);
+                    } else {
+                        activity.mTts.startSpeaking(getResources().getString(R.string.network_error),activity.mTtsListener);
+                        Toast.makeText(getContext(), getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
+                    }
                 }
                 break;
             case R.id.main_bt_03:
-                if (Utils.isFastClick()&&info!=null) {
-                    ((BindVeinMainFragment)getParentFragment()).setFragment(3);
-                }else {
-                    Toast.makeText(getActivity(),"网络已断开，请查看网络",Toast.LENGTH_LONG).show();
+                if (Utils.isFastClick()) {
+                    if (info != null) {
+                        ((BindVeinMainFragment) getParentFragment()).setFragment(3);
+                    } else {
+                        activity.mTts.startSpeaking(getResources().getString(R.string.network_error),activity.mTtsListener);
+                        Toast.makeText(getContext(), getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
+                    }
                 }
                 break;
             case R.id.clean_other:
-                if (!"".equals(clearlock.getText().toString().trim())&&!"0".equals(clearlock.getText().toString().trim())){
-                List<CabinetRecord> cabinetRecord=cabinetRecordDao.queryBuilder().where(CabinetRecordDao.Properties.CabinetNumber.eq(clearlock.getText().toString())).list();
-                if (cabinetRecord.size()>0){
-                    Toast.makeText(activity,"清除柜号"+clearlock.getText().toString()+"成功",Toast.LENGTH_SHORT).show();
+                if (info!=null) {
+                    cleanOther = true;
+                    if (!"".equals(clearlock.getText().toString().trim()) && !"0".equals(clearlock.getText().toString().trim())) {
+                        String sql = "select * from CABINET_NUMBER where CABINET_NUMBER = " + clearlock.getText().toString().trim() + " and IS_USER = \"占用\" ";
+                        Cursor cursor = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql, null);
+                        if (cursor.getCount() > 0) {
+                            Toast.makeText(activity, getResources().getString(R.string.cabinet_clear) + clearlock.getText().toString() + getResources().getString(R.string.successful), Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(activity, getResources().getString(R.string.cabinet_clear) + clearlock.getText().toString() + getResources().getString(R.string.failed), Toast.LENGTH_SHORT).show();
+                        }
+                        clearCabinetContract.clearCabinet(device, "" + clearlock.getText().toString().trim());
+                        QueryBuilder qb1 = cabinetRecordDao.queryBuilder();
+                        QueryBuilder qb = cabinetNumberDao.queryBuilder();
+                        List<CabinetRecord> users = qb1.where(CabinetRecordDao.Properties.CabinetNumber.eq(clearlock.getText().toString())).build().list();
+                        if (users.size() > 0) {
+                            List<CabinetNumber> list = qb.where(CabinetNumberDao.Properties.CabinetNumber.eq(users.get(users.size() - 1).getCabinetNumber())).list();
+                            if (list.size() != 0) {
+                                Logger.e("ThirdFragment" + "=============list.size" + list.size());
+                                CabinetNumber cabinetNumber = new CabinetNumber();
+                                cabinetNumber.setId(list.get(0).getId());
+                                cabinetNumber.setCabinetLockPlate(list.get(0).getCabinetLockPlate());
+                                cabinetNumber.setCircuitNumber(list.get(0).getCircuitNumber());
+                                cabinetNumber.setCabinetNumber(list.get(0).getCabinetNumber());
+                                cabinetNumber.setIsUser(getResources().getString(R.string.isfree));
+                                cabinetNumberDao.update(cabinetNumber);
+                            }
+                        }
+                    } else {
+                        Toast.makeText(activity, getResources().getString(R.string.clear_failed)+ clearlock.getText().toString(), Toast.LENGTH_SHORT).show();
+                    }
                 }else {
-                    Toast.makeText(activity,"清除柜号"+clearlock.getText().toString()+"失败",Toast.LENGTH_SHORT).show();
-                }
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        clearCabinetContract.clearCabinet(device,""+clearlock.getText().toString().trim());
-                    }
-                }).start();
-                QueryBuilder qb1 = cabinetRecordDao.queryBuilder();
-                QueryBuilder qb=cabinetNumberDao.queryBuilder();
-                List<CabinetRecord> users = qb1.where(CabinetRecordDao.Properties.CabinetNumber.eq(clearlock.getText().toString())).build().list();
-                if (users.size()>0) {
-                    List<CabinetNumber>list=qb.where(CabinetNumberDao.Properties.CabinetNumber.eq(users.get(users.size()-1).getCabinetNumber())).list();
-                    if (list.size()!=0) {
-                        Logger.e("ThirdFragment"+"=============list.size"+list.size());
-                        CabinetNumber cabinetNumber = new CabinetNumber();
-                        cabinetNumber.setId(list.get(0).getId());
-                        cabinetNumber.setCabinetLockPlate(list.get(0).getCabinetLockPlate());
-                        cabinetNumber.setCircuitNumber(list.get(0).getCircuitNumber());
-                        cabinetNumber.setCabinetNumber(list.get(0).getCabinetNumber());
-                        cabinetNumber.setIsUser("空闲");
-                        cabinetNumberDao.update(cabinetNumber);
-                    }
-                }
-                }else{
-                    Toast.makeText(activity,"清除柜号失败"+"不存在"+clearlock.getText().toString(),Toast.LENGTH_SHORT).show();
+                    activity.mTts.startSpeaking(getResources().getString(R.string.network_error),activity.mTtsListener);
+                    Toast.makeText(getContext(), getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
                 }
                 break;
             case R.id.clean_all:
-                cabinetNumberDao=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
-                List<CabinetNumber>listnum=cabinetNumberDao.loadAll();
-                QueryBuilder qb=cabinetNumberDao.queryBuilder();
-                listnum=qb.where(CabinetNumberDao.Properties.IsUser.eq("占用")).list();
-                CabinetNumber cabinetNumber=new CabinetNumber();
-                Logger.e("MainActivity"+"listnum"+listnum.size());
-//                if(listnum.size()>0) {
-//                    for (int i = 0; i < listnum.size(); i++) {
-//                        Logger.e("MainFragment1=" + listnum.get(i).getCabinetLockPlate() + "=" + listnum.get(i).getCabinetNumber() + "=" + listnum.get(i).getCircuitNumber() + "=" + listnum.get(i).getIsUser());
-//                    }
-                  clearCabinetContract.clearCabinet(device, "");
-                    Toast.makeText(activity, "清除所有柜号成功", Toast.LENGTH_SHORT).show();
-//                }else {
-                    Toast.makeText(getActivity(),"网络已断开，请查看网络",Toast.LENGTH_LONG).show();
-//                }
+                if (info!=null) {
+                    cleanAll = true;
+                    cabinetNumberDao = BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
+                    List<CabinetNumber> listnum = cabinetNumberDao.loadAll();
+                    QueryBuilder qb = cabinetNumberDao.queryBuilder();
+                    listnum = qb.where(CabinetNumberDao.Properties.IsUser.eq(getResources().getString(R.string.isuser))).list();
+                    CabinetNumber cabinetNumber = new CabinetNumber();
+                    Logger.e("MainActivity" + "listnum" + listnum.size());
+                    if (listnum.size() > 0) {
+                        for (int i = 0; i < listnum.size(); i++) {
+                            cabinetNumber = cleanLock(listnum.get(i));
+                            cabinetNumberDao.update(cabinetNumber);
+                        }
+                        activity.baseApplication.setDatabase();
+                    }
+                    clearCabinetContract.clearCabinet(device, "");
+
+                    Toast.makeText(activity, getResources().getString(R.string.clearall_successful), Toast.LENGTH_SHORT).show();
+                }else {
+                    Toast.makeText(getContext(), getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
+                }
                 break;
             case R.id.openlock_button:
                 String number;
@@ -297,12 +342,13 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                    int cabinetLockPlate=Integer.parseInt(list.get(0).getCabinetLockPlate());
                    int circuitNumber= Integer.parseInt(list.get(0).getCircuitNumber());
                     CabinetRecord cabinetRecord1=new CabinetRecord();
-                    cabinetRecord1.setMemberName("管理员");
+                    cabinetRecord1.setMemberName(getResources().getString(R.string.manager));
                     cabinetRecord1.setPhoneNum("***********");
                     cabinetRecord1.setCabinetNumber(circuitNumber+"");
-                    cabinetRecord1.setCabinetStating("管理员开柜");
+                    cabinetRecord1.setCabinetStating(getResources().getString(R.string.manager_open));
                     cabinetRecord1.setOpentime(opentime);
                     cabinetRecordDao.insert(cabinetRecord1);
+                    Logger.e("MainFragment"+"======cabinetLockPlate"+cabinetLockPlate+"circuitNumber"+circuitNumber);
                     if (cabinetLockPlate<11) {
                         try {
                             circuitNumber=circuitNumber%10;
@@ -354,17 +400,19 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                 }
                 break;
             case R.id.openlock_all:
-//                CabinetNumberDao cabinetNumberDao1=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
-//                List<CabinetNumber>alluser=cabinetNumberDao1.loadAll();
-//                for (int j=0;j<alluser.size();j++){
-//                    CabinetRecord cabinetRecord=new CabinetRecord();
-//                    cabinetRecord.setMemberName("管理员");
-//                    cabinetRecord.setPhoneNum("**********");
-//                    cabinetRecord.setCabinetStating("打开所有");
-//                    cabinetRecord.setOpentime(opentime);
-//                    cabinetRecord.setCabinetNumber(alluser.get(j).getCircuitNumber());
-//                    cabinetRecordDao.insert(cabinetRecord);
-//                }
+                cabinetNumberDao=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
+                cabinetRecordDao=BaseApplication.getInstances().getDaoSession().getCabinetRecordDao();
+               List<CabinetNumber> cabinetlist=cabinetNumberDao.loadAll();
+                List<CabinetRecord> list1=cabinetRecordDao.loadAll();
+                for(int i=0;i<cabinetlist.size();i++) {
+                    CabinetRecord cabinetRecord1=new CabinetRecord();
+                    cabinetRecord1.setMemberName(getResources().getString(R.string.manager));
+                    cabinetRecord1.setPhoneNum("***********");
+                    cabinetRecord1.setCabinetNumber(cabinetlist.get(i).getCabinetNumber());
+                    cabinetRecord1.setCabinetStating(getResources().getString(R.string.open_all));
+                    cabinetRecord1.setOpentime(opentime);
+                    cabinetRecordDao.insert(cabinetRecord1);
+                }
                 try {
                     serialPort =new SerialPort(new File("/dev/ttysWK1"),9600,0);
                     serialPort.getOutputStream().write(openDoorUtil.openAllDoor());
@@ -383,7 +431,11 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                 }catch (IOException e){
                     e.printStackTrace();
                 }
-                 adminopenCabinet.adminopen(device,"");
+                if (info!=null) {
+                    adminopenCabinet.adminopen(device, "");
+                }else {
+                    Toast.makeText(getContext(), getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
+                }
                 break;
             case R.id.openlock_other:
                 if ( !TextUtils.isEmpty(openlockplate.getText().toString())&&!TextUtils.isEmpty(openlock.getText().toString())) {
@@ -451,7 +503,11 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                         }
                     }
                 }
-                  adminopenCabinet.adminopen(device,""+openlock.getText().toString().trim());
+                if (info!=null) {
+                    adminopenCabinet.adminopen(device, "" + openlock.getText().toString().trim());
+                }else {
+            Toast.makeText(getContext(), getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
+        }
                 break;
             case R.id.back:
                 adminmessage.setVisibility(View.GONE);
@@ -460,9 +516,9 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                 QueryBuilder qb2=cabinetCountDao.queryBuilder();
                 List<CabinetNumber>listcount=cabinetCountDao.loadAll();
                 List<CabinetNumber>listuser=qb2.where(CabinetNumberDao.Properties.IsUser.eq("占用")).list();
-                text_num1.setText("全部"+listcount.size());
-                text_num2.setText("已用"+listuser.size());
-                text_num3.setText("剩余"+(listcount.size()-listuser.size()));
+                text_num1.setText(getResources().getString(R.string.cabinet_all)+listcount.size());
+                text_num2.setText(getResources().getString(R.string.cabinet_isuser)+listuser.size());
+                text_num3.setText(getResources().getString(R.string.cabinet_leave)+(listcount.size()-listuser.size()));
                 break;
             case R.id.button4:
                 SharedPreferences sharedPreferences2=activity.getSharedPreferences("user_info",0);
@@ -470,8 +526,17 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                 textView2.setText(deviceID);
                 break;
             case R.id.head_text_03_main:
-                        syncUserFeature.syncUser(device);
-                        syncUserFeature.syncSign(device);
+                if (info!=null) {
+                    SharedPreferences sharedPreferences = activity.getSharedPreferences("user_info", 0);
+                    String deviceId = sharedPreferences.getString("deviceId", "");
+                        activity.exitAlertDialog.show();
+                        syncUserFeature.syncSign(deviceId);
+                        downloadFeature.getPagesInfo(deviceId);
+
+                }else {
+                    activity.mTts.startSpeaking(getResources().getString(R.string.network_error),activity.mTtsListener);
+                    Toast.makeText(getContext(), getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
+                }
                 break;
             case R.id.record_button:
                String number1=cabinet_used.getText().toString();
@@ -483,41 +548,51 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                 checkUsedRecored.show();
                 break;
             case R.id.lock_message:
-                cabinetNumberDao= BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
-                List<CabinetNumber>  cabinetNumberList=cabinetNumberDao.loadAll();
+                CabinetNumberDao cabinetNumberDao1;
+                cabinetNumberDao1= BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
+                List<CabinetNumber>  cabinetNumberList=cabinetNumberDao1.loadAll();
                 for (int i=0;i<cabinetNumberList.size();i++){
-                    Logger.e("MainFragment1"+cabinetNumberList.get(i).getCabinetLockPlate()+"="+cabinetNumberList.get(i).getCircuitNumber()+"="+cabinetNumberList.get(i).getCabinetNumber()+"="+cabinetNumberList.get(i).getIsUser());
+                    Logger.e("MainFragment"+cabinetNumberList.get(i).getCabinetLockPlate()+"="+cabinetNumberList.get(i).getCircuitNumber()+"="+cabinetNumberList.get(i).getCabinetNumber()+"="+cabinetNumberList.get(i).getIsUser());
                 }
                 lockMessage=new LockMessage(getContext(),cabinetNumberList);
                 lockMessage.show();
                 break;
             case R.id.chang_pdw:
                 pwdmodel="2";
-                exitAlertDialog=new ExitAlertDialog(getContext());
-                exitAlertDialog.show();
+                exitAlertDialog1=new ExitAlertDialog1(getContext());
+                exitAlertDialog1.show();
+                break;
+            case R.id.back_home:
+                Intent intent = new Intent();
+                // 为Intent设置Action、Category属性
+                intent.setAction(Intent.ACTION_MAIN);// "android.intent.action.MAIN"
+                intent.addCategory(Intent.CATEGORY_HOME); //"android.intent.category.HOME"
+                startActivity(intent);
+                break;
         }
     }
     CabinetNumber cabinetNumber=new CabinetNumber();
     CabinetNumberDao cabinetNumberDao=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
-    private void cleanLock(CabinetNumber listnum){
+    private CabinetNumber cleanLock(CabinetNumber listnum){
         cabinetNumber.setId(listnum.getId());
         cabinetNumber.setCabinetLockPlate(listnum.getCabinetLockPlate());
         cabinetNumber.setCabinetNumber(listnum.getCabinetNumber());
         cabinetNumber.setCircuitNumber(listnum.getCircuitNumber());
-        cabinetNumber.setIsUser("空闲");
+        cabinetNumber.setIsUser(getResources().getString(R.string.isfree));
+        return cabinetNumber;
     }
-    private class ExitAlertDialog extends Dialog implements View.OnClickListener {
+    private class ExitAlertDialog1 extends Dialog implements View.OnClickListener {
         private Context mContext;
         private EditText etPwd;
         private Button btCancel;
         private Button btConfirm;
         private TextView texttilt;
-        public ExitAlertDialog(Context context, int theme) {
+        public ExitAlertDialog1(Context context, int theme) {
             super(context, theme);
             mContext = context;
             initDialog();
         }
-        public ExitAlertDialog(Context context) {
+        public ExitAlertDialog1(Context context) {
             super(context, R.style.customer_dialog);
             mContext = context;
             initDialog();
@@ -537,8 +612,8 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
             etPwd.setText("");
             if (pwdmodel=="1"){
             }else if (pwdmodel=="2"){
-                texttilt.setText("修改密码");
-                etPwd.setHint("请输入新密码");
+                texttilt.setText(R.string.chang_pwd);
+                etPwd.setHint(getResources().getString(R.string.put_new_pwd));
             }
             super.show();
         }
@@ -555,7 +630,7 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                     if(pwdmodel.equals("1")){
                     String pwd = etPwd.getText().toString().trim();
                     if (Utils.isEmpty(pwd)) {
-                        ToastUtils.show(mContext, "请输入密码", ToastUtils.LENGTH_SHORT);
+                        ToastUtils.show(mContext, getResources().getString(R.string.put_pwd), ToastUtils.LENGTH_SHORT);
                         return;
                     }
                     String repwd;
@@ -566,7 +641,7 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                         repwd = userInfo.getString("devicepwd","0");
                     }
                     if (!pwd.equals(repwd)) {
-                        ToastUtils.show(mContext, "密码不正确", ToastUtils.LENGTH_SHORT);
+                        ToastUtils.show(mContext, getResources().getString(R.string.error_password), ToastUtils.LENGTH_SHORT);
                         return;
                     }else {
                         userInfo = activity.getSharedPreferences("user_info", 0);
@@ -579,14 +654,85 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                         userInfo=activity.getSharedPreferences("user_info",0);
                         String pwd = etPwd.getText().toString().trim();
                         if (userInfo.getString("devicepwd","").toString().trim()==pwd) {
-                            ToastUtils.show(mContext, "密码不能跟上一次相同", ToastUtils.LENGTH_SHORT);
+                            ToastUtils.show(mContext, getResources().getString(R.string.same_pwd), ToastUtils.LENGTH_SHORT);
                         }else {
                             userInfo.edit().putString("devicepwd",pwd).commit();
-                            ToastUtils.show(mContext, "密码修改成功", ToastUtils.LENGTH_SHORT);
+                            ToastUtils.show(mContext, getResources().getString(R.string.chang_pwd_successful), ToastUtils.LENGTH_SHORT);
                         }
                     }
                     break;
             }
+        }
+    }
+    @Override
+    public void downloadNotReceiver(DownLoadData resultResponse) {
+
+    }
+
+    @Override
+    public void downloadApK(UpDateBean resultResponse) {
+
+    }
+
+    @Override
+    public void downloadSuccess(DownLoadData resultResponse) {
+
+    }
+
+    ArrayList<Person> SyncFeaturesPages = new ArrayList<>();
+    int totalPage=0,currentPage=0,downloadPage=0;
+    @Override
+    public void getPagesInfo(PagesInfoBean resultResponse) {
+        if (resultResponse.getData().getCount()>0) {
+            totalPage = resultResponse.getData().getPageCount();
+            for (int x = 0; x < 8; x++) {
+                if (x > totalPage - 1) {
+                    return;
+                }
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        currentPage++;
+                        Logger.e(currentPage + "currentPage");
+                        downloadFeature.syncUserFeaturePages(FileUtils.loadDataFromFile(activity, "deviceId.text"), currentPage);
+                    }
+                }).start();
+            }
+        }else {
+            activity.exitAlertDialog.dismiss();
+        }
+    }
+
+    @Override
+    public void syncUserFeaturePagesSuccess(SyncFeaturesPage resultResponse) {
+        if (resultResponse.getData().size()>0) {
+            downloadPage++;
+            Logger.e(downloadPage + "downloadPage");
+            if (totalPage > 8 && currentPage < totalPage) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        currentPage++;
+                        Logger.e(currentPage + "currentPage");
+                        downloadFeature.syncUserFeaturePages(FileUtils.loadDataFromFile(activity, "deviceId.text"), currentPage);
+                    }
+                }).start();
+            }
+            SyncFeaturesPages.addAll(resultResponse.getData());
+            if (downloadPage == totalPage) {
+                PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
+                personDao.insertInTx(resultResponse.getData());
+                Logger.e(SyncFeaturesPages.size() + getResources().getString(R.string.syn_data));
+                NetworkInfo info = connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+                if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+                    downloadFeature.appUpdateInfo(FileUtils.loadDataFromFile(activity, "deviceId.text"));
+                } else {
+                    Toast.makeText(activity, getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
+                }
+                activity.exitAlertDialog.dismiss();
+            }
+        }else {
+            activity.exitAlertDialog.dismiss();
         }
     }
 
@@ -602,77 +748,46 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
     }
     @Override
     public void adminopenSuccess(ResultResponse resultResponse) {
-
+        if (openOther){
+            openOther=false;
+        }else if (openAll){
+            openAll=false;
+        }
     }
+
     @Override
     public void ClearCabinetSuccess(ResultResponse resultResponse) {
-//        CabinetRecordDao cabinetRecordDao = BaseApplication.getInstances().getDaoSession().getCabinetRecordDao();
-//        CabinetNumberDao cabinetNumberDao=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
-//        QueryBuilder qb1 = cabinetRecordDao.queryBuilder();
-//        QueryBuilder qb = cabinetNumberDao.queryBuilder();
-//    if (isClearnOther) {
-//        CabinetRecord cabinetRecord1=new CabinetRecord();
-//        cabinetRecord1.setMemberName("管理员");
-//        cabinetRecord1.setPhoneNum("*************");
-//        cabinetRecord1.setCabinetNumber(clearlock.getText().toString()+"");
-//        cabinetRecord1.setCabinetStating("管理员清柜");
-//        cabinetRecord1.setOpentime(opentime);
-//        cabinetRecordDao.insert(cabinetRecord1);
-//    List<CabinetRecord> users = qb1.where(CabinetRecordDao.Properties.CabinetNumber.eq(clearlock.getText().toString())).build().list();
-//    if (users.size() > 0) {
-//        List<CabinetNumber> list = qb.where(CabinetNumberDao.Properties.CabinetNumber.eq(users.get(users.size() - 1).getCabinetNumber())).list();
-//        if (list.size() != 0) {
-//            Logger.e("ThirdFragment" + "=============list.size" + list.size());
-//            CabinetNumber cabinetNumber = new CabinetNumber();
-//            cabinetNumber.setId(list.get(0).getId());
-//            cabinetNumber.setCabinetLockPlate(list.get(0).getCabinetLockPlate());
-//            cabinetNumber.setCircuitNumber(list.get(0).getCircuitNumber());
-//            cabinetNumber.setCabinetNumber(list.get(0).getCabinetNumber());
-//            cabinetNumber.setIsUser("空闲");
-//            cabinetNumberDao.update(cabinetNumber);
-//        }
-//    }
-//    isClearnOther=false;
-//    }
-//    else
-//        if (isClearnAll){
-//        List<CabinetNumber> alluser=qb.where(CabinetNumberDao.Properties.IsUser.eq("占用")).list();
-
-//        for (int j=0;j<alluser.size();j++){
-//            CabinetRecord cabinetRecord=new CabinetRecord();
-//            cabinetRecord.setMemberName("管理员");
-//            cabinetRecord.setPhoneNum("************");
-//            cabinetRecord.setCabinetStating("清除所有");
-//            cabinetRecord.setOpentime(opentime);
-//            cabinetRecord.setCabinetNumber(alluser.get(j).getCircuitNumber());
-//            cabinetRecordDao.insert(cabinetRecord);
-//        }
-//        Cursor cursor;
-//        String sql;
-//        sql = "update CABINET_NUMBER set IS_USER = '空闲1' where IS_USER='占用'" ;
-//        cursor=BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
-//        Logger.e("MainFragment1"+"==========isClearnAll==========="+cursor.getCount());
-//        byte[][] feature=new byte[cursor.getCount()][];
-//        String [] Uids=new String[cursor.getCount()];
-//        while (cursor.moveToNext()){
-//            int nameColumnIndex = cursor.getColumnIndex("FINGERMODEL");
-//            String strValue=cursor.getString(nameColumnIndex);
-//            feature[i]=hexStringToByte(strValue);
-//            Uids[i]=cursor.getString(cursor.getColumnIndex("UID"));
-//            i++;
-//        }
-//        alluser=cabinetNumberDao.loadAll();
-//        for (int i=0;i<alluser.size();i++){
-//            CabinetNumber cabinetNumber = new CabinetNumber();
-//            cabinetNumber.setId(alluser.get(i).getId());
-//            cabinetNumber.setCabinetLockPlate(alluser.get(i).getCabinetLockPlate());
-//            cabinetNumber.setCircuitNumber(alluser.get(i).getCircuitNumber());
-//            cabinetNumber.setCabinetNumber(alluser.get(i).getCabinetNumber());
-//            cabinetNumber.setIsUser("空闲");
-//            cabinetNumberDao.update(cabinetNumber);
-//        }
-//        isClearnAll=false;
-//    }
+        cabinetNumberDao=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
+        CabinetRecordDao cabinetRecordDao=BaseApplication.getInstances().getDaoSession().getCabinetRecordDao();
+        List<CabinetNumber>users=cabinetNumberDao.loadAll();
+        if (cleanOther){
+        String number;
+        number=clearlock.getText().toString().trim();
+        QueryBuilder queryBuilder=cabinetNumberDao.queryBuilder();
+        List<CabinetNumber>list=queryBuilder.where(CabinetNumberDao.Properties.CabinetNumber.eq(number)).list();
+            Logger.e("ClearCabinetSuccess==========="+list.size());
+        if (list.size()>0) {
+            CabinetRecord cabinetRecord1 = new CabinetRecord();
+            cabinetRecord1.setMemberName(getResources().getString(R.string.manager));
+            cabinetRecord1.setPhoneNum("***********");
+            cabinetRecord1.setCabinetNumber(list.get(0).getCircuitNumber());
+            cabinetRecord1.setCabinetStating(getResources().getString(R.string.manager_clear));
+            cabinetRecord1.setOpentime(opentime);
+            cabinetRecordDao.insert(cabinetRecord1);
+        }
+        cleanOther=false;
+    }else if (cleanAll){
+            for(int i=0;i<users.size();i++){
+                CabinetRecord cabinetRecord1 = new CabinetRecord();
+                cabinetRecord1.setMemberName(getResources().getString(R.string.manager));
+                cabinetRecord1.setPhoneNum("***********");
+                cabinetRecord1.setCabinetNumber(users.get(i).getCircuitNumber());
+                cabinetRecord1.setCabinetStating(getResources().getString(R.string.clear_all));
+                cabinetRecord1.setOpentime(opentime);
+                cabinetRecordDao.insert(cabinetRecord1);
+            }
+        cleanAll=false;
+    }
     }
     @Override
     public void cabinetNumberSuccess(CabinetNumberData cabinetNumberData) {
@@ -684,57 +799,31 @@ public class MainFragment1 extends BaseFragment implements AdminopenCabinet.admi
                 cabinetNumber.setCircuitNumber(cabinetNumberData.getCabinetNumberMessage()[i].getCircuitNumber());
                 cabinetNumber.setCabinetLockPlate(cabinetNumberData.getCabinetNumberMessage()[i].getCabinetLockPlate());
                 cabinetNumber.setCabinetNumber(cabinetNumberData.getCabinetNumberMessage()[i].getCabinetNumber());
-                cabinetNumber.setIsUser("空闲");
+                cabinetNumber.setIsUser(getResources().getString(R.string.isfree));
                 BaseApplication.getInstances().getDaoSession().getCabinetNumberDao().insert(cabinetNumber);
             }
         }
     }
-
     @Override
-    public void syncSignUserSuccess(DownLoadData downLoadData) {
-        String sql;
-        sql = "select USER_ID from SIGN_USER";
-        int i=0;
-        Cursor cursor;
-        cursor = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
-        Logger.e("BaseApplication"+"downLoadData.getDown_userInfo().length="+cursor.getCount());
-        String [] Uids=new String[cursor.getCount()];
-        while (cursor.moveToNext()){
-            Uids[i]=cursor.getString(cursor.getColumnIndex("USER_ID"));
-            i++;
-        }
+    public void syncSignUserSuccess(Sign_data downLoadData) {
         SignUserDao signUserDao=BaseApplication.getInstances().getDaoSession().getSignUserDao();
-        if (downLoadData.getDown_userInfo().length>Uids.length){
-            for (int j=0;j<downLoadData.getDown_userInfo().length;j++){
-                SignUser signPerson =new SignUser();
-                signPerson.setPos(j+"");
-                signPerson.setUserId(downLoadData.getDown_userInfo()[j].getUid());
-                signUserDao.insert(signPerson);
-            }
+        if (downLoadData.getData().size()>0){
+            signUserDao.deleteAll();
+            signUserDao.insertInTx(downLoadData.getData());
         }
     }
-
     @Override
     public void syncUserSuccess(DownLoadData resultResponse) {
-        if (resultResponse!=null) {
-           PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
-            List<Person> user=personDao.loadAll();
-            List<Person> persons = personDao.loadAll();
-            Person person = new Person();
-            QueryBuilder qb = personDao.queryBuilder();
-            if (resultResponse.getDown_userInfo().length > 0) {
-                personDao.deleteAll();
-                for (int i = 0; i < resultResponse.getDown_userInfo().length; i++) {
-                    person.setId((long) i+1);
-                    person.setUid(resultResponse.getDown_userInfo()[i].getUid());
-                    person.setNumber(resultResponse.getDown_userInfo()[i].getUserName());
-                    person.setPos(i+1+"");
-                    person.setFingermodel(resultResponse.getDown_userInfo()[i].getFeature());
-                    personDao.insert(person);
-                }
-            }
+        PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
+        if (resultResponse.getData().size()>0) {
+            personDao.deleteAll();
+           personDao.insertInTx(resultResponse.getData());
         }
-        Logger.e( "BaseApplication"+"resultResponse.getDown_userInfo() " + resultResponse.getDown_userInfo().length);
+        if (activity.baseApplication.downLoadListner!=null) {
+            activity.baseApplication.downLoadListner.finish();
+        }
+        activity.exitAlertDialog.dismiss();
+        Logger.e( "BaseApplication"+"resultResponse.getDown_userInfo() " + resultResponse.getData().size());
     }
     /**
      * 广播接收器

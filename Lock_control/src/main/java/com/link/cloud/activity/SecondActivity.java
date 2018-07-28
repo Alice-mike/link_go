@@ -1,6 +1,5 @@
 package com.link.cloud.activity;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -22,12 +21,10 @@ import com.hotelmanager.xzy.util.OpenDoorUtil;
 import com.link.cloud.BaseApplication;
 import com.link.cloud.R;
 import com.link.cloud.base.ApiException;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.Lockdata;
 import com.link.cloud.contract.IsopenCabinet;
 import com.link.cloud.core.BaseAppCompatActivity;
-import com.link.cloud.fragment.BindVeinMainFragment;
-import com.link.cloud.fragment.FirstFragment;
-import com.link.cloud.fragment.MainFragment;
 import com.link.cloud.fragment.SecondFragment;
 import com.link.cloud.greendao.gen.CabinetNumberDao;
 import com.link.cloud.greendao.gen.CabinetRecordDao;
@@ -157,7 +154,6 @@ public class SecondActivity extends BaseAppCompatActivity implements IsopenCabin
         microFingerVein=MicroFingerVein.getInstance(this);
         mesReceiver = new MesReceiver();
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(LockActivity.ACTION_UPDATEUI);
         registerReceiver(mesReceiver, intentFilter);
         head_text_02.setText("临时开柜");
         workService=new WorkService();
@@ -412,6 +408,12 @@ public class SecondActivity extends BaseAppCompatActivity implements IsopenCabin
     String lockplate;
     CabinetRecordDao cabinetRecordDao;
     String opentime=null;
+
+    @Override
+    public void codeSuccess(Code_Message resultResponse) {
+
+    }
+
     @Override
     public void isopenSuccess(Lockdata resultResponse) {
         isview=true;
@@ -497,7 +499,7 @@ public class SecondActivity extends BaseAppCompatActivity implements IsopenCabin
     }
     @Override
     public void onDestroy() {
-        microFingerVein.close(1);
+//        microFingerVein.close(1);
         bRun=false;
         isview=true;
         timer.cancel();

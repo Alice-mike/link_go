@@ -1,9 +1,9 @@
 package md.com.sdk;
 
 import android.content.Context;
-import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.Handler;
+
 import java.lang.reflect.Field;
 import java.util.HashMap;
 
@@ -31,7 +31,7 @@ public class MicroFingerVein {
     //Activity ctx=null;
     UsbManager mUsbManager;
     private static MicroFingerVein instance;
-    public static   MicroFingerVein getInstance(Context _ctx){
+    public static MicroFingerVein getInstance(Context _ctx){
         if(instance != null){
             if(instance.ctx != _ctx){
                 instance = null;
@@ -46,7 +46,7 @@ public class MicroFingerVein {
     public MicroFingerVein(Context _ctx){
         ctx=_ctx;
         mUsbManager=(UsbManager)ctx.getSystemService(Context.USB_SERVICE);
-        UsbDeviceConnection  uc;
+        android.hardware.usb.UsbDeviceConnection uc;
     }
     private MicroFingerVein(){
     }

@@ -47,6 +47,7 @@ import butterknife.ButterKnife;
  */
 public abstract class BaseAppCompatActivity extends AppCompatActivity {
 //    public CountDownTimerUtil countDownTimer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -210,9 +211,11 @@ public abstract class BaseAppCompatActivity extends AppCompatActivity {
     public void finish() {
         super.finish();
     }
-
-
-
+    @Override
+    protected void onDestroy() {
+        ButterKnife.unbind(this);
+        super.onDestroy();
+    }
     /*********
      * Toast *
      *********/

@@ -52,57 +52,60 @@
                 android:gravity="center"
                 android:textStyle="bold"
                 android:textColor="@color/white"
-                android:textSize="30sp"
-                />
+                android:textSize="30sp"/>
         </LinearLayout>
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-            android:gravity="center_horizontal"
-       >
-    <!--<Button-->
-    <!--android:id="@+id/button01"-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:layout_marginTop="10dp"-->
-     <!--android:textSize="30sp"-->
-     <!--android:layout_marginLeft="20dp"-->
-    <!--android:text="配置1gpio" />-->
+        android:gravity="center_horizontal"
+        android:visibility="visible">
+        <!--<Button-->
+        <!--android:id="@+id/button01"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginTop="10dp"-->
+        <!--android:textSize="30sp"-->
+        <!--android:layout_marginLeft="20dp"-->
+        <!--android:text="配置1gpio" />-->
         <Button
             android:id="@+id/button02"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:textSize="30sp"
             android:layout_marginLeft="20dp"
-            android:text="配置2gpio" />
-    <Button
-    android:id="@+id/button1"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="10dp"
-       android:layout_marginLeft="20dp"
-     android:textSize="30sp"
-     
-    android:text="设置高电平" />
+            android:layout_marginTop="10dp"
+            android:text="@string/configure"
+            android:textColor="@color/black"
+            android:textSize="30sp" />
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/set_hight"
+            android:textColor="@color/black"
+            android:textSize="30sp" />
 
-    <Button
-    android:id="@+id/button2"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-      android:layout_marginTop="10dp"
-         android:layout_marginLeft="20dp"
-       android:textSize="30sp"
-    android:text="设置低电平" />
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/set_low"
+            android:textColor="@color/black"
+            android:textSize="30sp" />
     </LinearLayout>
 
 <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_gravity="center"
-    android:gravity="center_horizontal">
+    android:layout_gravity="center_horizontal"
+    android:gravity="center_horizontal"
+    android:visibility="visible">
     
     <Button
     android:id="@+id/button3"
@@ -110,8 +113,9 @@
     android:layout_height="wrap_content"
       android:layout_marginTop="10dp"
          android:layout_marginLeft="20dp"
+        android:textColor="@color/black"
       android:textSize="30sp"
-    android:text="读取gpio状态" />
+    android:text="@string/read_stating" />
 
 	<TextView
     android:id="@+id/textView1"
@@ -127,7 +131,8 @@
         android:layout_marginTop="10dp"
         android:layout_marginLeft="20dp"
         android:textSize="30sp"
-        android:text="设备id" />
+        android:textColor="@color/black"
+        android:text="@string/deviceId" />
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
@@ -136,5 +141,48 @@
         android:textColor="@color/white"
         />
 </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center">
+        <Button
+            android:id="@+id/button5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="20dp"
+            android:textSize="30sp"
+            android:textColor="@color/black"
+            android:text="返回主界面" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center_horizontal">
+        <EditText
+            android:id="@+id/code_mumber1"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            />
+    </LinearLayout>
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginBottom="10dp"
+            android:id="@+id/versionName"
+            android:textColor="@color/white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_30sp"
+            android:text=""
+            />
+    </RelativeLayout>
+
 </LinearLayout>
 

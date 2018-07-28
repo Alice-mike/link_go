@@ -1,8 +1,6 @@
 package md.com.sdk;
 
-import android.app.Activity;
 import android.content.Context;
-import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.Handler;
 
@@ -13,6 +11,7 @@ import java.util.HashMap;
  * Created by Administrator on 2017/12/17.
  */
 
+@SuppressWarnings("ALL")
 public class MicroFingerVein {
     //需要给usb授权
     public static  final   int   USB_HAS_REQUST_PERMISSION=100;
@@ -22,30 +21,32 @@ public class MicroFingerVein {
     public static  final    int  USB_DISCONNECT=102;
 
     public static  final    int UsbDeviceConnection=103;
+    public float fImageEnergy=0.0f;//output
+    public float fEnergyThreshold=0.04f;//input
 
     //设备类型    0: 单侧  1:薄型
     public int     devType=1;
     HashMap<Integer,Integer> mapHandle =new HashMap<>();
-    ////处理的上下文，可以在里面添加成功Handler handler进行事件处理
-    Activity ctx=null;
+    //处理的上下文，可以在里面添加成功Handler handler进行事件处理
+    //Activity ctx=null;
     UsbManager mUsbManager;
     private static MicroFingerVein instance;
-    public static MicroFingerVein getInstance(Activity  act){
+    public static MicroFingerVein getInstance(Context _ctx){
         if(instance != null){
-            if(instance.ctx != act){
+            if(instance.ctx != _ctx){
                 instance = null;
             }
         }
         if(instance == null){
-            instance = new MicroFingerVein(act);
+            instance = new MicroFingerVein(_ctx);
         }
         return  instance;
     }
-
-    public MicroFingerVein(Activity _ctx){
+    private Context ctx;
+    public MicroFingerVein(Context _ctx){
         ctx=_ctx;
         mUsbManager=(UsbManager)ctx.getSystemService(Context.USB_SERVICE);
-        UsbDeviceConnection  uc;
+        android.hardware.usb.UsbDeviceConnection uc;
     }
     private MicroFingerVein(){
     }
@@ -70,12 +71,12 @@ public class MicroFingerVein {
         if(!mapHandle.containsKey(index))
             return 0;
         int []state=new int[1];
-
         if(!fvdevGetState(mapHandle.get(index),state)){
             if (ctx != null){
                 Class ctxClass=ctx.getClass();
                 try {
                     Field f = ctxClass.getDeclaredField("handler");
+                    f.setAccessible(true);
                     Handler h=(Handler) f.get(ctx);
                     h.sendEmptyMessage(USB_DISCONNECT);
                 } catch (NoSuchFieldException e) {
@@ -87,7 +88,6 @@ public class MicroFingerVein {
             return 0;
         }
         return state[0];
-
     }
     public int  fvdev_get_state()  {
         return fvdev_get_state(0);

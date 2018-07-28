@@ -1,13 +1,19 @@
 package com.link.cloud.activity;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -16,39 +22,35 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.alibaba.sdk.android.push.AliyunMessageIntentService;
-import com.alibaba.sdk.android.push.CloudPushService;
 import com.alibaba.sdk.android.push.notification.CPushMessage;
-
 import com.link.cloud.BaseApplication;
-
 import com.link.cloud.R;
 import com.link.cloud.base.ApiException;
 import com.link.cloud.bean.DownLoadData;
+import com.link.cloud.bean.ResultHeartBeat;
+import com.link.cloud.contract.DeviceHeartBeatContract;
 import com.link.cloud.contract.SyncUserFeature;
 import com.link.cloud.greendao.gen.PersonDao;
+//import com.link.cloud.greendao.gen.SigePersonDao;
 import com.link.cloud.greendaodemo.Person;
-import com.link.cloud.view.ProgressHUD;
+//import com.link.cloud.greendaodemo.SignPerson;
+import com.link.cloud.utils.FileUtils;
 import com.orhanobut.logger.Logger;
 
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
 
-
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-
 import butterknife.Bind;
 import md.com.sdk.MicroFingerVein;
 
-import static com.alibaba.sdk.android.ams.common.util.HexUtil.hexStringToByte;
 import static com.link.cloud.component.MyMessageReceiver.REC_TAG;
 
 
 /**
  * Created by Administrator on 2017/8/16.
  */
+
 /**
  * Created by liyazhou on 17/8/22.
  * 为避免推送广播被系统拦截的小概率事件,我们推荐用户通过IntentService处理消息互调,接入步骤:
@@ -57,72 +59,50 @@ import static com.link.cloud.component.MyMessageReceiver.REC_TAG;
  * 3. 调用接口CloudPushService.setPushIntentService
  * 详细用户可参考:https://help.aliyun.com/document_detail/30066.html#h2-2-messagereceiver-aliyunmessageintentservice
  */
-public class WorkService extends AliyunMessageIntentService implements SyncUserFeature.syncUser{
+public class WorkService extends AliyunMessageIntentService implements DeviceHeartBeatContract.Devicehearbeat{
     @Bind(R.id.edit_code)
     EditText edit_code;
-//    MatchVeinTaskContract matchVeinTaskContract;
     boolean ret=false;
-    Handler handler=new Handler();
     static Activity activity=null;
-   static MicroFingerVein microFingerVein;
     private ConnectivityManager connectivityManager;//用于判断是否有网络
     private Toast mToast=null;
-   static PersonDao personDao;
-   byte[] fingermodle=null;
-    String device;
+//    String device;
+    DeviceHeartBeatContract deviceHeartBeatContract;
     private boolean isNetWork;
     private SyncUserFeature syncUserFeature;
+    private MicroFingerVein microFingerVein;
+    Context context;
     @Override
     public void onCreate() {
         super.onCreate();
-        syncUserFeature=new SyncUserFeature();
-        syncUserFeature.attachView(this);
-        com.orhanobut.logger.Logger.e("WorkService"+"==========");
-//        matchVeinTaskContract = new MatchVeinTaskContract();
+        microFingerVein=MicroFingerVein.getInstance(this);
+//        try {
+//            microFingerVein.close();
+//        }catch (Exception e){
+//          Logger.e(e.getMessage());
+//        }
+        deviceHeartBeatContract=new DeviceHeartBeatContract();
+        deviceHeartBeatContract.attachView(this);
+        context=this;
+        Logger.e("WorkService"+"==========");
     }
     public static void setActactivity(Activity actactivity) {
         activity = actactivity;
     }
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        new TimeThread().start();
-//  isNetworkConnected(WorkService.this);
-//        if (ret!=true){
-//            ret= MicroFingerVein.fvdevOpen();
-//        }
-        return Service.START_STICKY;
-    }
-
-    public void setFingermodle(byte[] fingermodle) {
-        this.fingermodle = fingermodle;
-    }
-    public byte[] getFingermodle() {
-        return fingermodle;
-    }
-
-    private void checkMD(){
-        if (activity!=null&&ret!=true) {
-            microFingerVein = MicroFingerVein.getInstance(activity);
-            int devicecount=microFingerVein.fvdev_get_count();
-            if (devicecount!=0) {
-                ret = microFingerVein.fvdev_open();
-//               Logger.e("WorkService"+"devicecount"+devicecount + "=====================" + ret);
-            }
-        }
-    }
+//    @Override
+//    public int onStartCommand(Intent intent, int flags, int startId) {
+//        new TimeThread().start();
+//        return Service.START_STICKY;
+//    }
     @Override
     public IBinder onBind(Intent intent) {
-//        matchVeinTaskContract.getVerifyTemplate();
-        return null;
+        new TimeThread().start();
+        return myBinder;
     }
-
     @Override
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
-        SharedPreferences user=activity.getSharedPreferences("user_info",0);
-        device= user.getString("deviceId","");
     }
-
     @Override
     public boolean onUnbind(Intent intent) {
         return super.onUnbind(intent);
@@ -132,20 +112,23 @@ public class WorkService extends AliyunMessageIntentService implements SyncUserF
         super.onDestroy();
     }
     private void network(){
+        SharedPreferences user=activity.getSharedPreferences("user_info",0);
+        String device= user.getString("deviceId","");
         connectivityManager =(ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
         NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
         if (info == null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
-            showPromptToast("网络已断开");
+//            showPromptToast("网络已断开");
+//            showPromptToast("网络已断开,请检查网络");
 //            Toast.makeText(WorkService.this, "检查网络连接是否打开", Toast.LENGTH_SHORT).show();
             isNetWork=false;
         } else { //当前有已激活的网络连接
-            if (isNetWork!=true&&device!=null){
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        syncUserFeature.syncUser(device);
-                    }
-                }).start();
+            if (isNetWork!=true&&!"".equals(device)){
+//                new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        syncUserFeature.syncUser(device);
+//                    }
+//                }).start();
                 isNetWork=true;
             }
         }
@@ -159,21 +142,32 @@ public class WorkService extends AliyunMessageIntentService implements SyncUserF
         }
         mToast.show();
     }
-
+    SharedPreferences user=activity.getSharedPreferences("user_info",0);
+    String deviceId= user.getString("deviceId","");
     public class TimeThread extends Thread {
+        Boolean isfirst=true;
         @Override
         public void run() {
             do {
-                checkMD();
+                if(isfirst){
                 try {
                     Thread.sleep(1000);
-//                    isNetworkConnected(WorkService.this);
+                    isfirst=false;
                     Message msg = new Message();
                     msg.what = 1;
                     mHandler.sendMessage(msg);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                }
+//                try {
+//                    Thread.sleep(180000);
+//                    if (!"".equals(FileUtils.loadDataFromFile(activity,"deviceId.text"))) {
+//                        deviceHeartBeatContract.deviceUpgrade(FileUtils.loadDataFromFile(activity,"deviceId.text"));
+//                    }
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
             } while (true);
         }
         private Handler mHandler = new Handler() {
@@ -182,19 +176,22 @@ public class WorkService extends AliyunMessageIntentService implements SyncUserF
                 super.handleMessage(msg);
                 switch (msg.what) {
                     case 1:
+                        mHandler.removeMessages(1);
                         network();
                         final Intent intent = new Intent();
                         intent.setAction(LockActivity.ACTION_UPDATEUI);
                         intent.putExtra("timeStr",getTime());
+                        intent.setAction(LockActivity.ACTION_UPDATE);
                         intent.putExtra("timeData",getData());
                         sendBroadcast(intent);
+                        mHandler.sendEmptyMessageDelayed(1,1000);
                         break;
                     default:
                         break;
                 }
             }
         };
-        //获得当前年月日时分秒星期
+        //获得当前年月日
         public String getData(){
             String timeStr=null;
             String mMonth=null;
@@ -211,43 +208,6 @@ public class WorkService extends AliyunMessageIntentService implements SyncUserF
                 mDay = "0"+String.valueOf(c.get(Calendar.DAY_OF_MONTH));// 获取当前月份的日期号码
             }else {
                 mDay = String.valueOf(c.get(Calendar.DAY_OF_MONTH));// 获取当前月份的日期号码
-            }
-            String mWay = String.valueOf(c.get(Calendar.DAY_OF_WEEK));
-            int mtime=c.get(Calendar.HOUR_OF_DAY);
-            int mHour = c.get(Calendar.HOUR);//时
-            int mMinute = c.get(Calendar.MINUTE);//分
-            int seconds=c.get(Calendar.SECOND);
-            if (mtime>=0&&mtime<=5){
-                timeStr="凌晨";
-            }else if (mtime>5&&mtime<8){
-                timeStr="早晨";
-            }else if(mtime>8&&mtime<12){
-                timeStr="上午";
-            }else if(mtime>=12&&mtime<14){
-                timeStr="中午";
-            }else if(mtime>=14&&mtime<18){
-                timeStr="下午";
-            }else if(mtime>=18&&mtime<19){
-                timeStr="傍晚";
-            }else if(mtime>=19&&mtime<=22){
-                timeStr="晚上";
-            }else if(mtime>22){
-                timeStr="深夜";
-            }
-            if("1".equals(mWay)){
-                mWay ="天";
-            }else if("2".equals(mWay)){
-                mWay ="一";
-            }else if("3".equals(mWay)){
-                mWay ="二";
-            }else if("4".equals(mWay)){
-                mWay ="三";
-            }else if("5".equals(mWay)){
-                mWay ="四";
-            }else if("6".equals(mWay)){
-                mWay ="五";
-            }else if("7".equals(mWay)){
-                mWay ="六";
             }
             return mYear+"-"+mMonth + "-" + mDay;
         }
@@ -290,57 +250,146 @@ public class WorkService extends AliyunMessageIntentService implements SyncUserF
     }
 
     @Override
-    public void syncUserSuccess(DownLoadData resultResponse) {
-        PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
-        personDao.deleteAll();
-        Person person = new Person();
-        if (resultResponse.getDown_userInfo().length >= 0) {
-            for (int i = 0; i < resultResponse.getDown_userInfo().length; i++) {
-                person.setId((long)i+1);
-                person.setUid(resultResponse.getDown_userInfo()[i].getUid());
-                person.setNumber(resultResponse.getDown_userInfo()[i].getUserName());
-                person.setPos(i+"");
-                person.setFingermodel(resultResponse.getDown_userInfo()[i].getFeature());
-                personDao.insert(person);
-            }
-        }
-        showPromptToast("同步成功");
-    }
-
-    @Override
-    public void onPermissionError(ApiException e) {
+    public void deviceHearBeat(ResultHeartBeat resultResponse) {
 
     }
 
-    @Override
-    public void onError(ApiException e) {
-
-    }
-
-    @Override
-    public void onResultError(ApiException e) {
-
-    }
-    //    public boolean isNetworkConnected(Context context) {
-//        Runnable runnable=new Runnable() {
-//            @Override
-//            public void run() {
-//                ProgressHUD.dismissProgress(WorkService.this,false,"网络不可用");
-//            }
-//        };
-//        if (context != null) {
-//            ConnectivityManager mConnectivityManager = (ConnectivityManager) context
-//                    .getSystemService(Context.CONNECTIVITY_SERVICE);
-//            NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
-//            if (mNetworkInfo != null) {
-//                return mNetworkInfo.isAvailable();
-//            }else {
-//                handler.postDelayed(runnable,1000);
+//    @Override
+//    public void syncSignUserSuccess(DownLoadData downLoadData) {
+//        Cursor cursor=null;
+//        String sql;
+//        sql = "select UID from PERSON";
+//        String [] Uids=new String[cursor.getCount()];
+//        int i=0;
+//        String [] downUid=new String[downLoadData.getDown_userInfo().length];
+//        cursor = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
+//        while (cursor.moveToNext()){
+//            Uids[i]=cursor.getString(cursor.getColumnIndex("UID"));
+//            i++;
+//        }
+//        SigePersonDao sigePersonDao=BaseApplication.getInstances().getDaoSession().getSigePersonDao();
+//        if (downLoadData.getDown_userInfo().length>Uids.length){
+//            for (int j=0;j<downLoadData.getDown_userInfo().length;j++){
+//                SignPerson signPerson =new SignPerson();
+//                signPerson.setId((long) j);
+//                signPerson.setPos(j+"");
+//                signPerson.setUserid(downLoadData.getDown_userInfo()[j].getUid());
+//                sigePersonDao.insert(signPerson);
 //            }
 //        }
-//        return false;
 //    }
+//    @Override
+//    public void syncUserSuccess(DownLoadData resultResponse) {
+//        PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
+//        personDao.deleteAll();
+//        Person person = new Person();
+//        if (resultResponse.getDown_userInfo().length >= 0) {
+//            for (int i = 0; i < resultResponse.getDown_userInfo().length; i++) {
+//                person.setId((long)i+1);
+//                person.setUid(resultResponse.getDown_userInfo()[i].getUid());
+//                person.setNumber(resultResponse.getDown_userInfo()[i].getUserName());
+//                person.setPos(i+"");
+//                person.setFingermodel(resultResponse.getDown_userInfo()[i].getFeature());
+//                personDao.insert(person);
+//            }
+//        }
+//        showPromptToast("同步成功");
+//    }
+    @Override
+    public void onPermissionError(ApiException e) {
+    }
+    @Override
+    public void onError(ApiException e) {
+    }
+    @Override
+    public void onResultError(ApiException e) {
+    }
+    private final static String TAG=WorkService.class.getSimpleName()+"_DEBUG";
+    private final static String ACTION_USB_PERMISSION = "com.android.USB_PERMISSION";
+    private MyBinder myBinder=new MyBinder();
+    private Handler handler=new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case MicroFingerVein.USB_HAS_REQUST_PERMISSION: {//请求usb授权；
+                    Log.e(TAG,"usb has request permission.");
+                    UsbDevice usbDevice=(UsbDevice)msg.obj;
+                    UsbManager mManager=(UsbManager)getSystemService(Context.USB_SERVICE);
+                    PendingIntent mPermissionIntent = PendingIntent.getBroadcast(getApplicationContext(),0, new Intent(ACTION_USB_PERMISSION), 0);
+                    if(mManager==null){
+                        mManager=(UsbManager)getSystemService(Context.USB_SERVICE);
+                    }
+                    mManager.requestPermission(usbDevice,mPermissionIntent);
+                    break;
+                }
+                case MicroFingerVein.USB_CONNECT_SUCESS: {//打印usb节点信息；
+//                    Log.e(TAG,"get usb connect info success.");
+//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//                        UsbDevice usbDevice = (UsbDevice) msg.obj;
+//                        if(WorkService.this.usbMsgCallback!=null){
+//                            usbMsgCallback.onUsbConnSuccess(usbDevice.getManufacturerName(),usbDevice.getDeviceName());
+//                        }
+//                    }
+//                    microFingerVein=MicroFingerVein.getInstance(context);
+                    break;
+                }
+                case MicroFingerVein.USB_DISCONNECT: {//usb 连接已断开；
+                    Log.e(TAG,"usb disconnected.");
+                    if(WorkService.this.usbMsgCallback!=null){
+                        usbMsgCallback.onUsbDisconnect();
+                    }
+                    break;
+                }
+                case MicroFingerVein.UsbDeviceConnection: {//接收device连接器对象；
+//                    Log.e(TAG, "usb device connection OK.");
+                    if (msg.obj!=null) {
+                        if(WorkService.this.usbMsgCallback!=null){
+                            usbMsgCallback.onUsbDeviceConnection((UsbDeviceConnection)msg.obj);
+                        }
+                    }
+                    break;
+                }
+                default: {
+                    Log.e(TAG, "undefined msg!(what=" + msg.what + ")");
+                    break;
+                }
+            }
+            return false;
+        }
+    });
+    private UsbMsgCallback usbMsgCallback;
+    public interface UsbMsgCallback{
+        /***
+         *  when find a new usb device;
+         *  @param usbManufacturerName manufacturer name of the new usb device;
+         *  @param usbDeviceName device name of the new usb device;
+         */
+        void onUsbConnSuccess(String usbManufacturerName, String usbDeviceName);
+        /**
+         *  when the md usb device disconnected;
+         */
+        void onUsbDisconnect();
+        /**
+         *  when connect md device success;
+         */
+        void onUsbDeviceConnection(UsbDeviceConnection usbDevConn);
+    }
 
+
+    public class MyBinder extends Binder {
+        /**
+         *  return a MicroFingerVein object for operate md device;
+         */
+        public MicroFingerVein getMicroFingerVeinInstance(){
+            return WorkService.this.microFingerVein;
+        }
+        /**
+         *  set a UsbMsgCallback object for the service to callback custom operating of usb msg;
+         */
+        public void setOnUsbMsgCallback(UsbMsgCallback usbMsgCallback){
+            WorkService.this.usbMsgCallback=usbMsgCallback;
+        }
+    }
     /**
      * 推送通知的回调方法
      * @param context
@@ -353,7 +402,6 @@ public class WorkService extends AliyunMessageIntentService implements SyncUserF
         Log.i(REC_TAG,"收到一条推送通知 ： " + title + ", summary:" + summary);
 //        BaseApplication.setConsoleText("收到一条推送通知 ： " + title + ", summary:" + summary);
     }
-
     /**
      * 推送消息的回调方法
      * @param context
@@ -364,7 +412,6 @@ public class WorkService extends AliyunMessageIntentService implements SyncUserF
         Log.i(REC_TAG,"收到一条推送消息 ： " + cPushMessage.getTitle()+cPushMessage.getTraceInfo()+", content:" + cPushMessage.getContent());
         BaseApplication.setConsoleText(cPushMessage.getContent());
     }
-
     /**
      * 从通知栏打开通知的扩展处理
      * @param context

@@ -44,6 +44,7 @@ public class BasePresenter<T extends MvpView> implements Presenter<T> {
     public DataManager mDataManager;
 
 
+
     @Override
     public void attachView(T mvpView) {
         this.mMvpView = mvpView;

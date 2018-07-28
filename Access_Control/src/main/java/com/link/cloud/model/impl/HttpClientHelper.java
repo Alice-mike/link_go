@@ -4,11 +4,18 @@ import android.widget.EditText;
 
 import com.google.gson.JsonObject;
 import com.link.cloud.bean.CabinetNumberData;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.Lockdata;
 import com.link.cloud.bean.MessagetoJson;
+import com.link.cloud.bean.OpenByQrCode;
+import com.link.cloud.bean.PagesInfoBean;
+import com.link.cloud.bean.ResultHeartBeat;
 import com.link.cloud.bean.ResultResponse;
+import com.link.cloud.bean.Sign_data;
+import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.UpDateBean;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.base.RestApi;
 import com.link.cloud.base.BaseApi;
@@ -34,25 +41,122 @@ public class HttpClientHelper implements IHttpClientHelper {
     public Boolean flag=true;
     private static final HttpClientHelper ourInstance = new HttpClientHelper();
 
-
     public static HttpClientHelper getInstance() {
         return ourInstance;
     }
 
-
     public HttpClientHelper() {
     }
+    @Override
+    public Observable<PagesInfoBean> getPagesInfo(String deviceId) {
+        JsonObject params = new JsonObject();
+        try {
+            params.addProperty("deviceId", deviceId);
 
+        } catch (Exception e) {
+            Logger.e("HttpClientHelper"+e.getMessage());
+        }
+        return BaseApi.getInstance().getBaseService().getPagesInfo(params);
+    }
+    @Override
+    public Observable<SyncFeaturesPage> syncUserFeaturePages(String deviceId, int currentPage) {
+        JsonObject params = new JsonObject();
+        try {
+            params.addProperty("deviceId", deviceId);
+            params.addProperty("currPage", currentPage);
 
+        } catch (Exception e) {
+            Logger.e("HttpClientHelper"+e.getMessage());
+        }
+        return BaseApi.getInstance().getBaseService().syncUserFeaturePages(params);
+    }
+    @Override
+    public Observable<DownLoadData> downloadNotReceiver(String deviceId) {
+        JsonObject params = new JsonObject();
+        try {
+            params.addProperty("deviceId", deviceId);
+
+        } catch (Exception e) {
+            Logger.e("HttpClientHelper"+e.getMessage());
+        }
+        return BaseApi.getInstance().getBaseService().downloadNotReceiver(params);
+    }
+    @Override
+    public Observable<UpDateBean> appUpdateInfo(String deviceId) {
+        JsonObject params = new JsonObject();
+        try {
+            params.addProperty("sign", "4924d3cea90f496b2d1d8f0996e19ef5");
+            params.addProperty("code","link");
+            params.addProperty("datetime",  "1529474071070");
+            params.addProperty("deviceId", deviceId);
+            params.addProperty("key", "848ec6fa44ac6bae");
+
+        } catch (Exception e) {
+            Logger.e("HttpClientHelper"+e.getMessage());
+        }
+        return BaseApi.getInstance().getBaseService().appUpdateInfo(params);
+    }
+    @Override
+    public Observable<RestResponse> sendLogMessage(String deviceId, String uid,String uids,String feature,String time,String scope, String result) {
+        JsonObject params = new JsonObject();
+        try {
+            params.addProperty("deviceId", deviceId);
+            params.addProperty("uid", uid);
+            params.addProperty("uids", uids);
+            params.addProperty("feature",feature);
+            params.addProperty("time",time);
+            params.addProperty("scope",scope);
+            params.addProperty("result",result);
+        }catch (Exception e){
+            Logger.e("HttpClientHelper"+e.getMessage());
+        }
+        return BaseApi.getInstance().getBaseService().sendLogMessage(params);
+    }
+    //心跳接口
+    @Override
+    public Observable<ResultHeartBeat> deviceHeartBeat(String deviceId) {
+        JsonObject params=new JsonObject();
+        try {
+            params.addProperty("deviceId",deviceId);
+        }catch (Exception e){
+            Logger.e("HttpClientHelper"+e.getMessage());
+        }
+        return BaseApi.getInstance().getBaseService().deviceHeartBeat(params);
+    }
+    @Override
+    public Observable<Sign_data> syncSignUserFeature(String deviceId) {
+        JsonObject params = new JsonObject();
+        try {
+            params.addProperty("deviceId", deviceId);
+
+        } catch (Exception e) {
+            Logger.e("HttpClientHelper"+e.getMessage());
+        }
+        return BaseApi.getInstance().getBaseService().syncSignUserFeature(params);
+    }
     @Override
     public Observable<UpdateMessage> deviceUpgrade(String deviceID) {
         JsonObject params=new JsonObject();
         try {
-            params.addProperty("deviceID",deviceID);
+            params.addProperty("deviceId",deviceID);
+
         }catch (Exception e){
             Logger.e("HttpClientHelper"+e.getMessage());
         }
         return BaseApi.getInstance().getBaseService().deviceUpgrade(params);
+    }
+
+
+    @Override
+    public Observable<Code_Message> validationQrCode(String deviceId, String qrCodeStr) {
+        JsonObject params=new JsonObject();
+        try {
+            params.addProperty("deviceId",deviceId);
+            params.addProperty("qrCodeStr",qrCodeStr);
+        }catch (Exception e){
+            Logger.e("HttpClientHelper"+e.getMessage());
+        }
+        return BaseApi.getInstance().getBaseService().validationQrCode(params);
     }
 
     @Override

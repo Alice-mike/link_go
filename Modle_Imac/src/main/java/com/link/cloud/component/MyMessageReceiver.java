@@ -71,7 +71,7 @@ public class MyMessageReceiver extends MessageReceiver {
     @Override
     public void onMessage(Context context, CPushMessage cPushMessage) {
         Log.i(REC_TAG,"收到一条推送消息 ： " + cPushMessage.getTitle() + ", content:" + cPushMessage.getContent());
-        BaseApplication.setConsoleText(cPushMessage.getTitle() + ", content:" + cPushMessage.getContent());
+        BaseApplication.setConsoleText(cPushMessage.getContent());
         switch (cPushMessage.getTitle()){
             case "1":
                 tojoson(cPushMessage.getContent());

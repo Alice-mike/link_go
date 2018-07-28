@@ -3,6 +3,7 @@ package com.link.cloud.view;
 import android.app.Dialog;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ListView;
@@ -18,6 +19,7 @@ import com.link.cloud.greendaodemo.RecordAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Created by 30541 on 2018/5/3.
@@ -30,23 +32,23 @@ public class LockMessage extends Dialog{
     private List<CabinetNumber> recordList = new ArrayList<CabinetNumber>();
     private List recordstate=new ArrayList();
     LockedAdapter myAdapter;
-    public LockMessage(@NonNull Context context) {
+    public LockMessage(@NonNull Context context,List<CabinetNumber>  CabinetNumberList) {
         super(context);
         mContext = context;
-        initDialog();
+        recordList=CabinetNumberList;
+        initDialog(recordList);
     }
 
-    public LockMessage(@NonNull Context context, int themeResId) {
+    public LockMessage(@NonNull Context context, int themeResId,List<CabinetNumber> recordList) {
         super(context, R.style.customer_dialog);
         mContext = context;
-        initDialog();
+        recordList=recordList;
+        initDialog(recordList);
     }
-    private void initDialog() {
+    private void initDialog(List<CabinetNumber> recordList) {
         View view = LayoutInflater.from(mContext).inflate(R.layout.lock_message, null);
         setContentView(view);
         listView=(ListView)view.findViewById(R.id.lock_message);
-        cabinetNumberDao= BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
-        recordList=cabinetNumberDao.loadAll();
         myAdapter=new LockedAdapter(recordList,mContext);
         listView.setAdapter(myAdapter);
     }

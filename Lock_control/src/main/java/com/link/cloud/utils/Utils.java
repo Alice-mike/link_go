@@ -1,6 +1,7 @@
 package com.link.cloud.utils;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.text.TextUtils;
@@ -26,7 +27,6 @@ import java.util.regex.Pattern;
  * Created by Shaozy on 2016/8/13.
  */
 public class Utils {
-
     /**
      * 将String型格式化,比如想要将2011-11-11格式化成2011年11月11日,就StringPattern("2011-11-11","yyyy-MM-dd","yyyy年MM月dd日").
      *
@@ -48,6 +48,28 @@ public class Utils {
             return date;
         }
         return sdf2.format(d);
+    }
+        // 两次点击按钮之间的点击间隔不能少于1000毫秒
+        private static final int MIN_CLICK_DELAY_TIME = 600;
+        private static long lastClickTime;
+        public static boolean isFastClick() {
+            boolean flag = false;
+            long curClickTime = System.currentTimeMillis();
+            if ((curClickTime - lastClickTime) >= MIN_CLICK_DELAY_TIME) {
+                flag = true;
+            }
+            lastClickTime = curClickTime;
+            return flag;
+        }
+    private static Toast mToast=null;
+    public static void showPromptToast(Context context, String promptWord) {
+        if (mToast == null) {
+            mToast = Toast.makeText(context, promptWord,
+                    Toast.LENGTH_SHORT);
+        } else {
+            mToast.setText(promptWord);
+        }
+        mToast.show();
     }
     /**
      * 字节数组转换为十六进制字符串
@@ -146,7 +168,7 @@ public class Utils {
             sb.append(str);
         }
         sb.append(getMetaData(Constant.APP_SECRET));
-        Logger.e(sb.toString()+"android=============");
+//        Logger.e(sb.toString()+"android=============");
         try {
             sign = toMD5HexStr(sb.toString());
         } catch (NoSuchAlgorithmException e) {

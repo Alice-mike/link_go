@@ -3,7 +3,6 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
-
     <LinearLayout
         android:id="@+id/layout_two"
     android:layout_width="wrap_content"
@@ -27,12 +26,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <LinearLayout
+          <LinearLayout
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:layout_marginTop="35px"
                 android:layout_marginLeft="35px">
-        <TextView
+         <TextView
             android:id="@+id/bind_member_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -62,8 +61,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
-                android:gravity="center"
-                >
+                android:gravity="center">
                 <TextView
                     android:id="@+id/userType"
                     android:layout_width="wrap_content"
@@ -72,8 +70,7 @@
                     android:textSize="30sp"
                     android:textColor="@color/white"
                     android:layout_gravity="center"
-                    android:text="教练"
-                    />
+                    android:text="教练"/>
             </LinearLayout>
         </LinearLayout>
         <LinearLayout
@@ -90,7 +87,6 @@
                 android:text=""
                 android:textSize="45sp"/>
         </LinearLayout>
-
         <RelativeLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -118,8 +114,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="25px"
                 android:layout_alignParentBottom="true"
-                android:layout_alignParentRight="true"
-                >
+                android:layout_alignParentRight="true">
             <TextView
                 android:id="@+id/bind_member_begintime"
                 android:layout_width="wrap_content"
@@ -128,8 +123,7 @@
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentRight="true"
                 android:textSize="20sp"
-                android:text=""
-                />
+                android:text=""/>
                 <TextView
                     android:id="@+id/bind_member_endtime"
                     android:layout_width="wrap_content"
@@ -164,7 +158,6 @@
             android:textSize="@dimen/text_size_40sp"/>
     </LinearLayout>
     </LinearLayout>
-
     <LinearLayout
         android:id="@+id/layout_error_text"
         android:layout_width="wrap_content"
@@ -185,6 +178,8 @@
             android:textColor="@color/white"
             android:textSize="30px"
             />
+
+
     </LinearLayout>
     <LinearLayout
         android:id="@+id/layout_three"
@@ -192,6 +187,10 @@
         android:layout_height="500px"
         android:visibility="gone"
         android:orientation="vertical">
+        <EditText
+            android:id="@+id/qrcode"
+            android:layout_width="1dp"
+            android:layout_height="1dp" />
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -218,7 +217,6 @@
                 android:layout_height="160px"
                 android:id="@+id/up_lesson"
                 android:layout_gravity="center_vertical"
-                android:layout_marginLeft="77px"
                 android:background="@drawable/up_btn_bg"/>
             <!--</LinearLayout>-->
             <LinearLayout
@@ -228,8 +226,8 @@
                 android:layout_height="wrap_content">
                 <com.link.cloud.ui.RollListView
                     android:id="@+id/lessonmessageInfo"
-                    android:layout_width="550px"
-                    android:layout_height="600px"
+                    android:layout_width="650px"
+                    android:layout_height="400px"
                     android:layout_gravity="center"
                     android:scrollbars="none" />
             </LinearLayout>
@@ -243,7 +241,6 @@
                 android:layout_height="160px"
                 android:layout_gravity="center_vertical"
                 android:id="@+id/next_lesson"
-                android:layout_marginRight="77px"
                 android:background="@drawable/next_btn_bge"/>
         </LinearLayout>
         <LinearLayout
@@ -266,14 +263,18 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:visibility="gone"
+        android:layout_marginTop="200dp"
         android:id="@+id/selectLesson"
+        android:gravity="center"
         android:layout_gravity="center">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="50px"
             android:layout_gravity="center"
+            android:gravity="center_horizontal"
             android:id="@+id/lesson_text"
+            android:textColor="@color/white"
             android:text="上课成功"
             android:textSize="40dp"/>
     </LinearLayout>

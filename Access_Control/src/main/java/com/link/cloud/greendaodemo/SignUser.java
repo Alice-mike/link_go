@@ -1,8 +1,8 @@
 package com.link.cloud.greendaodemo;
 
 import org.greenrobot.greendao.annotation.Entity;
-import org.greenrobot.greendao.annotation.Id;
 import org.greenrobot.greendao.annotation.Generated;
+import org.greenrobot.greendao.annotation.Id;
 
 /**
  * Created by 30541 on 2018/6/26.

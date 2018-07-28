@@ -11,6 +11,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.link.cloud.R;
+import com.link.cloud.activity.WorkService;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.SignUserdata;
 import com.orhanobut.logger.Logger;
 
@@ -21,7 +23,6 @@ import com.link.cloud.core.BaseFragment;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-
 
 public class SignFragment_Two extends BaseFragment  {
     @Bind(R.id.layout_two)
@@ -62,14 +63,14 @@ public class SignFragment_Two extends BaseFragment  {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
-    public static SignFragment_Two newInstance(SignUserdata userdata) {
+    public static SignFragment_Two newInstance(Code_Message userdata) {
         Logger.e("SignFragment_Two-------newInstance");
         SignFragment_Two fragment = new SignFragment_Two();
         Bundle args = new Bundle();
-        args.putString("membername",userdata.getSigndata().getUserInfo().getName());
-        args.putInt("sex",userdata.getSigndata().getUserInfo().getSex());
-        args.putInt("usertype",userdata.getSigndata().getUserInfo().getUserType());
-        args.putString("userphone",userdata.getSigndata().getUserInfo().getPhone());
+        args.putString("membername",userdata.getData().getUserInfo().getName());
+        args.putInt("sex",userdata.getData().getUserInfo().getSex());
+        args.putInt("usertype",userdata.getData().getUserInfo().getUserType());
+        args.putString("userphone",userdata.getData().getUserInfo().getPhone());
          fragment.setArguments(args);
         return fragment;
     }
@@ -87,21 +88,21 @@ public class SignFragment_Two extends BaseFragment  {
 //            layout_two.setVisibility(View.VISIBLE);
             menber_name.setText(bundle.getString("membername"));
             if (bundle.getInt("sex")!= 0) {
-                menber_sex.setText("女");
+                menber_sex.setText(R.string.girl);
             } else {
-                menber_sex.setText("男");
+                menber_sex.setText(R.string.man);
             }
             String phoneNum = bundle.getString("userphone");
             if (phoneNum.length() == 11) {
                 phoneNum = phoneNum.substring(0, 3) + "****" + phoneNum.substring(7, phoneNum.length());
             }
             menber_phone.setText(phoneNum);
-            if (bundle.getInt("usertype") == 1) {
-                usertype.setText("会员");
-            } else if (bundle.getInt("usertype") == 2) {
-                usertype.setText("工作人员");
+            if ("1".equals(bundle.getString("usertype"))) {
+                usertype.setText(R.string.member);
+            } else if ("2".equals(bundle.getInt("usertype"))) {
+                usertype.setText(R.string.employee);
             } else {
-                usertype.setText("教练");
+                usertype.setText(R.string.coach);
             }
         }
         callBackValue.setActivtyChange("3");

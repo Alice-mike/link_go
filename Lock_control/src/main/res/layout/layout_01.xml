@@ -21,11 +21,53 @@
             android:layout_alignParentLeft="true"
             android:textSize="45sp"/>
     </RelativeLayout>
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:orientation="vertical"-->
+        <!--android:id="@+id/open_layout"-->
+        <!--android:layout_gravity="center"-->
+        <!--android:gravity="center"-->
+        <!--android:visibility="gone">-->
+        <!--<Button-->
+            <!--android:id="@+id/open_finger"-->
+            <!--android:textSize="40dp"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="指静脉"/>-->
+        <!--<Button-->
+            <!--android:id="@+id/open_qrcode"-->
+            <!--android:textSize="40dp"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="二维码"/>-->
+    <!--</LinearLayout>-->
+
+    <!--<LinearLayout-->
+        <!--android:id="@+id/code_layout"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:layout_gravity="center"-->
+        <!--android:gravity="center"-->
+        <!--android:visibility="gone">-->
+        <!--<EditText-->
+            <!--android:id="@+id/qrcode"-->
+            <!--android:layout_width="1dp"-->
+            <!--android:layout_height="1dp" />-->
+        <!--<TextView-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="请将手机二维码对准扫码区"-->
+            <!--android:textColor="@color/white"-->
+            <!--android:textSize="40dp"-->
+            <!--android:textStyle="bold" />-->
+    <!--</LinearLayout>-->
     <LinearLayout
         android:id="@+id/layout_three"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:visibility="gone"
         android:orientation="vertical">
     <LinearLayout
         android:layout_width="700px"
@@ -52,12 +94,16 @@
             android:id="@+id/text_error"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="请按图提示操作"
+            android:text="@string/put_finger_right"
             android:gravity="center"
             android:textStyle="bold"
             android:textColor="@color/white"
             android:textSize="30px"
             />
+        <EditText
+        android:id="@+id/qrcode"
+        android:layout_width="1dp"
+        android:layout_height="1dp" />
     </LinearLayout>
     </LinearLayout>
     <LinearLayout
@@ -78,7 +124,7 @@
             android:gravity="center"
             android:textStyle="bold"
             android:textColor="@color/white"
-            android:text="您的柜子号码是"/>
+            android:text="@string/cabinet_number"/>
         <TextView
             android:id="@+id/text_number"
             android:layout_width="match_parent"
@@ -86,7 +132,7 @@
             android:layout_weight="1"
             android:textStyle="bold"
             android:textColor="@color/colorbutton"
-            android:text="B 008"
+            android:text=""
             android:textSize="80sp"
             android:layout_gravity="center"
             android:gravity="center"/>
@@ -100,6 +146,6 @@
             android:layout_gravity="center"
             android:lines="2"
             android:maxWidth="300sp"
-            android:text="您的储物柜已打开请核对柜号存取物品"/>
+            android:text="@string/cabinet_put_out"/>
 </LinearLayout>
 </LinearLayout>

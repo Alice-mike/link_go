@@ -4,16 +4,22 @@ import com.google.gson.JsonObject;
 import com.link.cloud.bean.CabinetNumberData;
 import com.link.cloud.bean.CardInfo;
 import com.link.cloud.bean.CodeInfo;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.LessonResponse;
 import com.link.cloud.bean.Lockdata;
 import com.link.cloud.bean.Member;
 import com.link.cloud.bean.MessagetoJson;
+import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.RestResponse;
+import com.link.cloud.bean.ResultHeartBeat;
 import com.link.cloud.bean.ResultResponse;
 import com.link.cloud.bean.ReturnBean;
+import com.link.cloud.bean.Sign_data;
 import com.link.cloud.bean.SignedResponse;
+import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.bean.UserResponse;
 import com.link.cloud.bean.Voucher;
@@ -46,8 +52,24 @@ public class DataManager {
         this.deviceHelper = DeviceHelper.getInstance();
         this.reservoirUtils = new ReservoirUtils();
     }
+    public Observable<DownLoadData>downloadNotReceiver(String deviceId){
+        return this.httpClientHelper.downloadNotReceiver(deviceId).compose(RxUtils.applyIOToMainThreadSchedulers());
+    }
+    public Observable<UpDateBean>appUpdateInfo(String deviceId){
+        return this.httpClientHelper.appUpdateInfo(deviceId).compose(RxUtils.applyIOToMainThreadSchedulers());
+    }
+    public Observable<Sign_data>syncSignUserFeature(String deviceId){
+        return this.httpClientHelper.syncSignUserFeature(deviceId).compose(RxUtils.applyIOToMainThreadSchedulers());
+    }
+    public Observable<ResultHeartBeat>deviceHeartBeat(String deviceId){
+        return this.httpClientHelper.deviceHeartBeat(deviceId).compose(RxUtils.applyIOToMainThreadSchedulers());
+    }
     public Observable<UpdateMessage>deviceUpgrade(String deviceID){
         return this.httpClientHelper.deviceUpgrade(deviceID).compose(RxUtils.applyIOToMainThreadSchedulers());
+    }
+    public Observable<RestResponse>sendLogMessage(String deviceId, String uid,String uids,String feature,String time,String scope, String result){
+        return this.httpClientHelper.sendLogMessage(deviceId,uid,uids,feature,time,scope,result)
+                .compose(RxUtils.applyIOToMainThreadSchedulers());
     }
     public Observable<DeviceData>getdeviceID(String deviceTargetValue,int deviceType){
         return this.httpClientHelper.getdeviceID(deviceTargetValue,deviceType).compose(RxUtils.applyIOToMainThreadSchedulers());
@@ -69,6 +91,16 @@ public class DataManager {
     }
     public Observable<CabinetNumberData>cabinetNumberList(String deviceId){
         return this.httpClientHelper.cabinetNumberList(deviceId).compose(RxUtils.applyIOToMainThreadSchedulers());
+    }
+
+    public Observable<Code_Message>validationQrCode(String deviceId,String qrCodeStr){
+        return this.httpClientHelper.validationQrCode(deviceId,qrCodeStr).compose(RxUtils.applyIOToMainThreadSchedulers());
+    }
+    public Observable<PagesInfoBean>getPagesInfo(String deviceId){
+        return this.httpClientHelper.getPagesInfo(deviceId).compose(RxUtils.applyIOToMainThreadSchedulers());
+    }
+    public Observable<SyncFeaturesPage>syncUserFeaturePages(String deviceId, int currentPage){
+        return this.httpClientHelper.syncUserFeaturePages(deviceId,currentPage).compose(RxUtils.applyIOToMainThreadSchedulers());
     }
 
 }

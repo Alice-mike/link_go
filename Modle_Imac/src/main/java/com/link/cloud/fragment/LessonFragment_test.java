@@ -1,9 +1,12 @@
 package com.link.cloud.fragment;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -18,8 +21,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.link.cloud.R;
+import com.link.cloud.activity.WorkService;
+import com.link.cloud.bean.RestResponse;
 import com.link.cloud.bean.RetrunLessons;
 import com.link.cloud.bean.UserInfo;
+import com.link.cloud.contract.SendLogMessageTastContract;
 import com.link.cloud.greendao.gen.PersonDao;
 import com.link.cloud.greendaodemo.Person;
 import com.link.cloud.ui.HorizontalListViewAdapter;
@@ -35,14 +41,19 @@ import com.link.cloud.contract.EliminateLessonContract;
 import com.link.cloud.contract.UserLessonContract;
 import com.link.cloud.core.BaseFragment;
 
+import org.apache.commons.lang.StringUtils;
 import org.greenrobot.greendao.query.QueryBuilder;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import butterknife.Bind;
 import md.com.sdk.MicroFingerVein;
 
 
+import static com.alibaba.sdk.android.ams.common.util.HexUtil.bytesToHexString;
 import static com.alibaba.sdk.android.ams.common.util.HexUtil.hexStringToByte;
 import static com.link.cloud.utils.Utils.byte2hex;
 
@@ -50,13 +61,15 @@ import static com.link.cloud.utils.Utils.byte2hex;
  * Created by Administrator on 2017/7/31.
  */
 
-public class LessonFragment_test extends BaseFragment implements UserLessonContract.UserLesson{
+public class LessonFragment_test extends BaseFragment implements UserLessonContract.UserLesson,SendLogMessageTastContract.sendLog{
 @Bind(R.id.layout_two)
 LinearLayout layout_two;
     @Bind(R.id.layout_three)
     LinearLayout layout_three;
     @Bind(R.id.bind_member_next)
     Button next_bt;
+    @Bind(R.id.lesson_bt_next)
+    Button button_sure;
     @Bind(R.id.bind_member_name)
     TextView menber_name;
     @Bind(R.id.bind_member_cardtype)
@@ -95,17 +108,17 @@ LinearLayout layout_two;
     public Context mContext;
     public Runnable runnable,runnable2;
     public UserLessonContract presenter;
+    SendLogMessageTastContract sendLogMessageTastContract;
     public static CallBackValue callBackValue;
     UserInfo caochInfo,userinfo;
     byte[] featuer = null;
-    int[] state = new int[1];
+    int state;
     byte[] img1 = null;
     boolean ret = false;
     int[] pos = new int[1];
     float[] score = new float[1];
-
     int userType;
-    String userid,caochId,clerkid;
+    String userid,caochId,clerkid,personUid;
     EliminateActivity activity;
     PersonDao personDao;
     boolean flog=true;
@@ -128,32 +141,66 @@ LinearLayout layout_two;
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext=this.getContext();
-
+        sendLogMessageTastContract=new SendLogMessageTastContract();
+        sendLogMessageTastContract.attachView(this);
 //        mediaPlayer=MediaPlayer.create(activity,R.raw.failure_sign);
     }
+    @SuppressLint("HandlerLeak")
     Handler handler = new Handler() {
         public void handleMessage(android.os.Message msg) {
             switch (msg.what) {
                 case 0:
-                    QueryBuilder qb = personDao.queryBuilder();
-                    List<Person> users = qb.where(PersonDao.Properties.Id.eq((long)pos[0]+1)).list();
-                    userType=users.get(0).getUserType();
                     Logger.e("userType======="+userType);
                     if (caochId==null&&userType==2){
                         callBackValue.setActivtyChange("2");
-                        caochId=users.get(0).getUid();
+                        caochId=personUid;
                          text_error.setText("请会员放置手指");
                     }else if (caochId!=null&&userType==0){
-                        userid=users.get(0).getUid();
-//                        callBackValue.setActivtyChange("3");
-//                        layout_error_text.setVisibility(View.GONE);
-//                        layout_three.setVisibility(View.GONE);
-//                        layout_two.setVisibility(View.VISIBLE);
+                        userid=personUid;
+                        callBackValue.setActivtyChange("3");
+                        layout_error_text.setVisibility(View.GONE);
+                        layout_three.setVisibility(View.GONE);
+                        layout_two.setVisibility(View.GONE);
+                        lessonLayout.setVisibility(View.VISIBLE);
                         flog=false;
                         Logger.e("LessonFragment========userid"+userid+"caochId"+caochId);
                         SharedPreferences userinfo=activity.getSharedPreferences("user_info",0);
-                        presenter.eliminateLesson("pmljt8z",1,userid,caochId,clerkid);
-
+                       String device=userinfo.getString("device","");
+//                        for (int i=0;i<num;i++) {
+//                            lessonId[0]="222222";
+//                            lessonName[0]="高温瑜伽";
+//                            lessonDate[0]="2018/05/28-2018/05/28";
+//                        }
+//                        hListViewAdapter=new HorizontalListViewAdapter(getContext(),1,"张教练","王大壮","13022222222","222222","高温瑜伽","2018/05/28-2018/05/28");
+//                        horizontalListView.setAdapter(hListViewAdapter);
+//                        horizontalListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//                            @Override
+//                            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+//                                hListViewAdapter.setSelectIndex(position);
+//                                selectPosition = position;
+//                                lessonnum=lessonResponse.getLessonResponse().lessonInfo[position].getLessonId();
+//                                hListViewAdapter.notifyDataSetChanged();
+//                            }
+//                        });
+//                        clickListener = new View.OnClickListener() {
+//                            @Override
+//                            public void onClick(View v) {
+//                                // TODO Auto-generated method stub
+//                                switch (v.getId()) {
+//                                    case R.id.up_lesson:
+//                        uplesson();
+//                                        Logger.e("eliminateSuccess========="+"R.id.up_lesson");
+//                                        break;
+//                                    case R.id.next_lesson:
+//                        nextlesson();
+//                                        Logger.e("eliminateSuccess========="+"next_lesson");
+//                                        break;
+//                                }
+//                            }
+//                        };
+//                        up_lesson.setOnClickListener(clickListener);
+//                        next_lesson.setOnClickListener(clickListener);
+                        presenter.eliminateLesson(device,1,userid,caochId,clerkid);
                     }else {
                         text_error.setText("请教练放置手指");
                     }
@@ -161,10 +208,13 @@ LinearLayout layout_two;
                 case 1:
                     break;
                 case 2:
-//                    text_error.setText("验证失败...");
+                    text_error.setText("验证失败...");
                     break;
                 case 3:
-//                    text_error.setText("请移开手指");
+                    text_error.setText("请会员放置手指");
+                    break;
+                case 4:
+                    text_error.setText("请教练放置手指");
                     break;
 //                case 4:
 //                    text_error.setText("放置手指错误，请放置同一根手指");
@@ -191,35 +241,121 @@ LinearLayout layout_two;
         layout_error_text.setVisibility(View.VISIBLE);
         layout_three.setVisibility(View.VISIBLE);
         personDao=BaseApplication.getInstances().getDaoSession().getPersonDao();
+        button_sure.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                lessonLayout.setVisibility(View.GONE);
+                selectLesson.setVisibility(View.VISIBLE);
+            }
+        });
         next_bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Logger.e("===============================");
                 SharedPreferences userinfo=activity.getSharedPreferences("user_info",0);
-                presenter.selectLesson("pmljt8z",1,lessonResponse.getLessonResponse().getLessonInfo()[selectPosition].getLessonId(),
+                String deivece=userinfo.getString("device","");
+                presenter.selectLesson("1000834GS7K",1,lessonResponse.getLessonResponse().getLessonInfo()[selectPosition].getLessonId(),
                         userid,caochId,clerkid);
             }
         });
         if (flog=true){
-        executeSql();
-        run();
+        setupParam();
         }
     }
-
-    void  executeSql() {
-        Logger.e("SigeActivity-------"+"executeSql");
-        personDao=BaseApplication.getInstances().getDaoSession().getPersonDao();
-        personDao.loadAll();
-        String sql = "select FINGERMODEL from PERSON" ;
-        int i=0;
+    boolean bopen=false;
+    private volatile boolean bRun=false;
+    private Thread mdWorkThread=null;//进行建模或认证的全局工作线程
+    private void setupParam() {
+        layout_error_text.setVisibility(View.VISIBLE);
+        bRun=true;
+        mdWorkThread=new Thread(runnablemol);
+        mdWorkThread.start();
+    }
+    Runnable  runnablemol=new Runnable() {
+        @Override
+        public void run() {
+            while (bRun) {
+                state = WorkService.microFingerVein.fvdev_get_state();
+                //设备连接正常则进入正常建模或认证流程
+//                Logger.e("BindActivty===========state"+state);
+                if (state != 0) {
+                    Logger.e("BindActivty===========state" + state);
+                    if (state == 1 || state == 2) {
+                        continue;
+                    } else if (state == 3) {
+                        try {
+                            Thread.sleep(200);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    byte[] img = WorkService.microFingerVein.fvdev_grab();
+                    Logger.e("BindActivty===========img" + img);
+                    if (img == null) {
+                        continue;
+                    }
+                    personUid=findfeature(img);
+//                    ret=WorkService.microFingerVein.fv_index(featuer, featuer.length / 3352, img, pos, score);
+//                    Logger.e("BindActivty===========count" +featuer.length / 3352 +"pos==="+pos[0]+"score= ="+score[0]);
+                    if (ret == true && score[0] > 0.63) {
+                        Log.e("Identify success,", "pos=" + pos[0] + ", score=" + score[0]);
+                        if (handler != null) {
+                            Message message = new Message();
+                            message.what = 0;
+                            handler.sendMessage(message);
+                        }
+                        bopen = false;
+                    } else {
+                        if (handler != null) {
+                            Log.e("Identify failed,", "ret=" + ret + ",pos=" + pos[0] + ", score=" + score[0]);
+                            Message message = new Message();
+                            message.what = 2;
+                            handler.sendMessage(message);
+                        }
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }else if (handler!=null){//触摸state==0时
+                    try {
+                        if (handler!=null) {
+                            if(caochId!=null) {
+                                handler.sendEmptyMessage(3);
+                            }else {
+                                handler.sendEmptyMessage(4);
+                            }
+                            Thread.sleep(200);
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+//                    if(bopen) {
+//                        deviceTouchState = 1;
+//                    }
+                }
+            }
+            if (bopen){
+                WorkService.microFingerVein.close();
+                bopen=false;
+            }
+        }
+    };
+    String findfeature(byte[] img){
+        long startime=System.currentTimeMillis();
+        Log.e("SignFragment_one","startime:"+startime);
+        personDao= BaseApplication.getInstances().getDaoSession().getPersonDao();
+        String sql = "select FINGERMODEL,UID from PERSON";
+        int i =0;
         Cursor cursor = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
         byte[][] feature=new byte[cursor.getCount()][];
+        String [] Uids=new String[cursor.getCount()];
         while (cursor.moveToNext()){
-            Logger.e("SigeActivity----no---");
             int nameColumnIndex = cursor.getColumnIndex("FINGERMODEL");
             String strValue=cursor.getString(nameColumnIndex);
-            Logger.e("SigeActivity-------"+strValue);
             feature[i]=hexStringToByte(strValue);
+            Uids[i]=cursor.getString(cursor.getColumnIndex("UID"));
             i++;
         }
         int len = 0;
@@ -228,68 +364,44 @@ LinearLayout layout_two;
             len += element.length;
         }
         // 复制元素
-        featuer = new byte[len];
+        byte[] featuer = new byte[len];
         int index = 0;
         for (byte[] element : feature) {
             for (byte element2 : element) {
                 featuer[index++] = element2;
             }
         }
-        Logger.e("SignActivity======feature"+byte2hex(featuer));
-    }
-
-    public void run()
-    {
-//        layout_error_text.setVisibility(View.VISIBLE);
-        if (ret != true) {
-            Log.i("fingetopen","failed");
-        } else {
-            Log.i("fingetopen","success");
+        long endtime=System.currentTimeMillis();
+        Log.e("SignFragment_one","endtime:"+endtime);
+        boolean  identifyResult = WorkService.microFingerVein.fv_index(featuer, featuer.length / 3352, img, pos, score);//比对是否通过
+        identifyResult = identifyResult && score[0] > 0.63;//得分是否达标
+        DateFormat dateTimeformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String strBeginDate = dateTimeformat.format(new Date());
+        String Uid=null;
+        if (Uids.length>0) {
+            Uid = Uids[pos[0]];
         }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (flog) {
-//                    identify_process();
-                }
+        String uids= StringUtils.join(Uids,",");
+        SharedPreferences userinfo=activity.getSharedPreferences("user_info",0);
+       String deviceId=userinfo.getString("deviceId","");
+        ConnectivityManager connectivityManager;//用于判断是否有网络
+        connectivityManager =(ConnectivityManager)activity.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+        NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+        if (identifyResult) {
+            if (info!=null) {
+                sendLogMessageTastContract.sendLog(deviceId, Uid, uids, bytesToHexString(img), strBeginDate, score[0] + "", "验证成功");
             }
-        }).start();
-
+            Logger.e("SignActivity"+"pos="+pos[0]+"score="+score[0]+"成功");
+            return Uid;
+        }else {
+            if (info!=null) {
+                sendLogMessageTastContract.sendLog(deviceId, Uid, uids, bytesToHexString(img), strBeginDate, score[0] + "", "验证失败");
+            }
+            Logger.e("SignActivity"+"pos="+pos[0]+"score="+score[0]+"失败");
+            return null;
+        }
     }
-//    private void identify_process()
-//    {
-//        try {
-//            Thread.sleep(30);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//        ret = MicroFingerVein.fvdevGetState(state);
-//        if (ret != true) {
-//            MicroFingerVein.fvdevOpen();
-//            return;
-//        }
-//        if (state[0] != 3) {
-//            return;
-//        }
-//        img1 = MicroFingerVein.fvdevGrabImage();
-//        if (img1 == null) {
-////            handler.sendEmptyMessage(3);
-//            return;
-//        }
-////        Logger.e("i="+i+"SignActivity"+byte2hex(featuer));
-//        ret = MicroFingerVein.fvSearchFeature(featuer,featuer.length/3352, img1, pos, score);
-//        if (ret == true && score[0] > 0.5) {
-//            Log.e("Identify success,", "pos=" + pos[0] + ", score=" + score[0]);
-//            handler.sendEmptyMessage(0);
-//        } else {
-//            Log.e("Identify failed,", "ret=" + ret + ",pos=" + pos[0] + ", score=" + score[0]);
-////            handler.sendEmptyMessage(2);
-//        }
-//        while (state[0] == 3) {
-////            Logger.e("SigeActivity======"+"请移开手指");
-//            MicroFingerVein.fvdevGetState(state);
-//        }
-//    }
+
     @Override
     protected void initListeners() {
         Logger.e("LessonFragment_test============initListeners");
@@ -350,11 +462,11 @@ LinearLayout layout_two;
                 // TODO Auto-generated method stub
                 switch (v.getId()) {
                     case R.id.up_lesson:
-                        uplesson();
+//                        uplesson();
                         Logger.e("eliminateSuccess========="+"R.id.up_lesson");
                         break;
                     case R.id.next_lesson:
-                        nextlesson();
+//                        nextlesson();
                         Logger.e("eliminateSuccess========="+"next_lesson");
                         break;
                 }
@@ -362,8 +474,13 @@ LinearLayout layout_two;
         };
         up_lesson.setOnClickListener(clickListener);
         next_lesson.setOnClickListener(clickListener);
-        checkButton();
+//        checkButton();
         Logger.e("eliminateSuccess========="+lessonResponse.toString());
+    }
+
+    @Override
+    public void sendLogSuccess(RestResponse resultResponse) {
+
     }
 
     @Override
@@ -464,7 +581,6 @@ LinearLayout layout_two;
         }
         this.showProgress(false);
     }
-
     @Override
     public void onStop() {
         Logger.e("LessonFragment_test============onStop");
@@ -472,7 +588,7 @@ LinearLayout layout_two;
     }
     @Override
     public void onDestroy() {
-
+        bRun=false;
         flog=false;
         Logger.e("LessonFragment_test============onDestroy");
         if (runnable!=null) {

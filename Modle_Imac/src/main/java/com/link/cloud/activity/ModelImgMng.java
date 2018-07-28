@@ -1,4 +1,4 @@
-package com.md.rec;
+package com.link.cloud.activity;
 
 /**
  * 管理认证或建模过程用到的几张图片及其特征值的存取；

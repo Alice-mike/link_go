@@ -7,16 +7,22 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.hotelmanager.xzy.util.OpenDoorUtil;
 import com.link.cloud.BaseApplication;
@@ -24,8 +30,12 @@ import com.link.cloud.R;
 import com.link.cloud.activity.LockActivity;
 import com.link.cloud.activity.WorkService;
 import com.link.cloud.base.ApiException;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.Lockdata;
+import com.link.cloud.bean.Member;
+import com.link.cloud.constant.Constant;
 import com.link.cloud.contract.IsopenCabinet;
+import com.link.cloud.contract.SendLogMessageTastContract;
 import com.link.cloud.core.BaseFragment;
 import com.link.cloud.greendao.gen.CabinetNumberDao;
 import com.link.cloud.greendao.gen.CabinetRecordDao;
@@ -34,23 +44,42 @@ import com.link.cloud.greendaodemo.CabinetNumber;
 import com.link.cloud.greendaodemo.CabinetRecord;
 import com.link.cloud.greendaodemo.Person;
 
+import com.link.cloud.message.MessageEvent;
+import com.link.cloud.model.MdFvHelper;
 import com.link.cloud.utils.CountDownTimer;
+import com.link.cloud.utils.FileUtils;
+import com.link.cloud.utils.Finger_identify;
+import com.link.cloud.utils.Utils;
 import com.orhanobut.logger.Logger;
 
+import org.apache.commons.lang.StringUtils;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.greenrobot.greendao.query.QueryBuilder;
 import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import android_serialport_api.SerialPort;
 import butterknife.Bind;
+import butterknife.BindDimen;
+import butterknife.ButterKnife;
 import butterknife.OnClick;
 import md.com.sdk.MicroFingerVein;
+import retrofit2.http.Body;
 
+import static com.alibaba.sdk.android.ams.common.util.HexUtil.bytesToHexString;
 import static com.alibaba.sdk.android.ams.common.util.HexUtil.hexStringToByte;
 /**
  * Created by 30541 on 2018/3/28.
@@ -72,16 +101,16 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
     TextView text_end;
     @Bind(R.id.text_error)
     TextView text_error;
-    @Bind(R.id.head_text_03)
+//    @Bind(R.id.head_text_03)
     TextView head_text_03;
-    @Bind(R.id.time_forfinger)
+//    @Bind(R.id.time_forfinger)
+//    @Bind(R.id.open_layout)
+//    LinearLayout open_Layout;
+//    @Bind(R.id.code_layout)
+//    LinearLayout code_layout;
     TextView time_forfinger;
     OpenDoorUtil openDoorUtil;
-    private PersonDao personDao;
     private CabinetNumberDao cabinetNumberDao;
-    byte[] featuer = null;
-    byte[] img1 = null;
-    boolean ret = false;
     int state = 0;
     boolean timestart;
     int[] pos = new int[1];
@@ -90,22 +119,52 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
     IsopenCabinet isopenCabinet;
     MesReceiver mesReceiver;
     boolean flog = true;
+    String userUid;
     WorkService workService;
-
+    private final static int MSG_SHOW_LOG=3;
+    private final static int MSG_SHOW_START=0;
+    private final static int MSG_SHOW_SUCCESS=1;
+    Context context;
+    String opentype=null;
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.activity = (LockActivity) activity;
     }
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        Logger.e("FirstFragment"+"======onCreate=======");
+        Logger.e("FirstFragment"+"======onCreate===isHidden="+this.isHidden()+"isVisible()"+this.isVisible());
         super.onCreate(savedInstanceState);
         isopenCabinet = new IsopenCabinet();
+        EventBus.getDefault().register(this);
         isopenCabinet.attachView(this);
         openDoorUtil = new OpenDoorUtil();
+        context=getContext();
+        this.isHidden();
+        this.isVisible();
     }
+    @Override
+    public void onResume() {
+        Logger.e("FirstFragment"+"======onResume=======");
+        super.onResume();
+        layout_three.setVisibility(View.VISIBLE);
+        time_out();
+        setupParam();
+        code_mumber=(EditText)activity.findViewById(R.id.qrcode);
+        code_mumber.setFocusable(true);
+        code_mumber.setCursorVisible(true);
+        code_mumber.setFocusableInTouchMode(true);
+        code_mumber.requestFocus();
+       /**
+        * EditText编辑框内容发生变化时的监听回调
+        */
+        code_mumber.addTextChangedListener(new EditTextChangeListener());
+    }
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
 
     public static FirstFragment newInstance() {
         FirstFragment fragment = new FirstFragment();
@@ -113,58 +172,63 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
         fragment.setArguments(args);
         return fragment;
     }
-
     @Override
     protected void initListeners() {
         Logger.e("FirstFragment"+"======initListeners=======");
     }
-
     @Override
     protected void initViews(View self, Bundle savedInstanceState) {
         Logger.e("FirstFragment"+"======initViews=======");
+        time_forfinger=(TextView)findView(R.id.time_forfinger);
+        head_text_03=(TextView)findView(R.id.head_text_03);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(LockActivity.ACTION_UPDATEUI);
+        intentFilter.addAction(LockActivity.ACTION_UPDATE);
+        mesReceiver = new MesReceiver();
+        activity.registerReceiver(mesReceiver, intentFilter);
+        head_text_02.setText(R.string.eposit_open);
+        text_error.setText(R.string.finger_right);
+        workService = new WorkService();
     }
-
     @Override
     protected int getLayoutId() {
         return R.layout.layout_01;
     }
-
     @Override
     protected void initData() {
         Logger.e("FirstFragment"+"======initData=======");
-        mesReceiver = new MesReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(LockActivity.ACTION_UPDATEUI);
-        activity.registerReceiver(mesReceiver, intentFilter);
-        head_text_02.setText("寄存物品");
-        text_error.setText("请正确放置手指...");
-        workService = new WorkService();
-        time_forfinger.setVisibility(View.INVISIBLE);
-        setupParam();
-        time_out();
     }
     @Override
     protected void onVisible() {
-        Logger.e("FirstFragment"+"======onVisible=======");
     }
     @Override
     protected void onInvisible() {
-        timer.cancel();
+        if (timer!=null) {
+            timer.cancel();
+        }
         Logger.e("FirstFragment"+"======onInvisible=======");
     }
-
     @OnClick(R.id.head_layout_01)
     public void Onclick(View view) {
         switch (view.getId()) {
             case R.id.head_layout_01:
-                bRun = false;
-                isview=true;
-                if (timer!=null) {
-                    timer.cancel();
-                    timer = null;
+                if (Utils.isFastClick()) {
+                    activity.bRun = false;
+                    isview = true;
+                    mdWorkThread=null;
+                    runnablemol=null;
+                    if (handler!=null){
+                        handler.removeCallbacksAndMessages(null);
+                    }
+                    handler=null;
+                    if (timer != null) {
+                        timer.cancel();
+                        timer = null;
+                    }
+                    if (((BindVeinMainFragment) getParentFragment()).bindViewPager.getCurrentItem()!=0){
+                    ((BindVeinMainFragment) getParentFragment()).setFragment(0);
+                    }
                 }
-                MainFragment mainFragment = MainFragment.newInstance();
-                ((BindVeinMainFragment) getParentFragment()).addFragment(mainFragment, 0);
                 break;
         }
     }
@@ -178,213 +242,273 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
     timer = new CountDownTimer(40 * 1000, 1000) {
         @Override
         public void onTick(long millisUntilFinished) {
-
             time_start=true;
-            if (isview==false) {
-                time_forfinger.setVisibility(View.INVISIBLE);
-            }
             // TODO Auto-generated method stub
-            Logger.e("FirstFragment"+millisUntilFinished / 1000);
-            if (millisUntilFinished / 1000 <= 30&&isview==false) {
+            if (isview==false) {
                 time_forfinger.setVisibility(View.VISIBLE);
                 time_forfinger.setText(millisUntilFinished / 1000 + "");
             }
         }
         @Override
         public void onFinish() {
-            if (bRun=true) {
-                bRun = false;
+            if (activity.bRun=true) {
+                activity.bRun = false;
             }
-            MainFragment mainFragment = MainFragment.newInstance();
-            ((BindVeinMainFragment) getParentFragment()).addFragment(mainFragment, 0);
+            if (((BindVeinMainFragment) getParentFragment()).bindViewPager.getCurrentItem()!=0) {
+                ((BindVeinMainFragment) getParentFragment()).setFragment(0);
+            }
         }
     };
 }
     Handler handler = new Handler() {
         public void handleMessage(android.os.Message msg) {
             switch (msg.what) {
-                case 0:
-                    text_error.setText("请正确放置手指...");
+                case MSG_SHOW_START:
+                    if(msg.obj!=null) {
+                        text_error.setText(R.string.finger_right);
+                    }
                     break;
-                case 1:
-                    text_error.setText("验证成功");
-                    SharedPreferences userinfo = activity.getSharedPreferences("user_info", 0);
-                    String deviceId = userinfo.getString("deviceId", "");
-                    personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
-                    QueryBuilder qb = personDao.queryBuilder();
-                    String value = pos[0] + "";
-                    List<Person> users = qb.where(PersonDao.Properties.Pos.eq(value)).build().list();
-                    if (users.size() > 0) {
-                        String uid = users.get(0).getUid();
-                        Logger.e("ThirdFragment==============" + pos[0] + "==uid=" + uid + "users.size" + users.size());
-                        try {
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    isopenCabinet.isopen(0, deviceId, uid, "vein");
-                                }
-                            }).start();
-                        }catch (Exception e){
-                            e.printStackTrace();
+                case MSG_SHOW_SUCCESS:
+                    ConnectivityManager connectivityManager;//用于判断是否有网络
+                    connectivityManager =(ConnectivityManager)activity.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+                    NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+                    if (info!=null) {
+                        activity.bRun = false;
+                        SharedPreferences userinfo = activity.getSharedPreferences("user_info", 0);
+//                    String deviceId = userinfo.getString("deviceId", "");
+                        if (userUid != null && text_error != null) {
+                            text_error.setText(R.string.check_successful);
                         }
-                    } else {
-                        text_error.setText("没找到该会员数据");
+                        if (userUid != null) {
+                            EventBus.getDefault().post(new MessageEvent(0, FileUtils.loadDataFromFile(activity, "deviceId.text"), userUid));
+                        } else if (userUid == null) {
+                            text_error.setText("");
+                        }
+                        Logger.e("FirstFragment-opentype" + opentype);
+//                            new Thread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    try {
+//                                    Thread.sleep(1000);
+//                                } catch (InterruptedException e) {
+//                                    e.printStackTrace();
+//                                }
+//                                }
+//                            }).start();
+                    }else {
+                        Toast.makeText(getContext(),getResources().getString(R.string.network_error),Toast.LENGTH_LONG).show();
                     }
                     break;
                 case 2:
-                    text_error.setText("暂无签到数据");
+//                    text_error.setText("暂无签到数据");
+                    break;
+                case MSG_SHOW_LOG:
+                    if (text_error!=null) {
+                        if (msg.obj != null && handler != null) {
+                            text_error.setText((String) (msg.obj));
+                        }
+                    }
                     break;
                 case 7:
-                    text_error.setText("验证失败...");
+                    activity.mTts.startSpeaking(getResources().getString(R.string.check_failed), activity.mTtsListener);
+                    ConnectivityManager connectivityManager1;//用于判断是否有网络
+                    connectivityManager1 =(ConnectivityManager)activity.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+                    NetworkInfo info1 =connectivityManager1.getActiveNetworkInfo(); //获取活动的网络连接信息
+                    if (info1!=null) {
+                        if (context != null) {
+                            text_error.setText(R.string.check_failed);
+                        }
+                    }else {
+                        Toast.makeText(getContext(),getResources().getString(R.string.network_error),Toast.LENGTH_LONG).show();
+                    }
                     break;
                 case 8:
-                    text_error.setText("请移开手指");
+                    text_error.setText(R.string.move_finger);
                     break;
             }
         }
     };
-
-    byte[]  executeSql() {
-        byte[] nFeatuer=null;
-        personDao= BaseApplication.getInstances().getDaoSession().getPersonDao();
-        personDao.loadAll();
-        int i=0;
-        Cursor cursor;
-        String sql;
-        sql = "select FINGERMODEL from PERSON" ;
-        cursor = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
-        byte[][] feature=new byte[cursor.getCount()][];
-        while (cursor.moveToNext()){
-            int nameColumnIndex = cursor.getColumnIndex("FINGERMODEL");
-            String strValue=cursor.getString(nameColumnIndex);
-            feature[i]=hexStringToByte(strValue);
-            i++;
-        }
-        int len = 0;
-        // 计算一维数组长度
-        if(feature.length>0) {
-            for (byte[] element : feature) {
-                len += element.length;
-            }
-            // 复制元素
-            nFeatuer = new byte[len];
-            int index = 0;
-            for (byte[] element : feature) {
-                for (byte element2 : element) {
-                    nFeatuer[index++] = element2;
-                }
-            }
-        }
-        return nFeatuer;
+    private Thread mdWorkThread=null;
+    private void setupParam(){
+        Logger.e("FirstFragment"+"======setupParam=======");
+           activity.bRun = true;
+           mdWorkThread = new Thread(runnablemol);
+           mdWorkThread.start();
     }
-    boolean bopen=false;
-    private volatile boolean bRun=false;
-    private Thread mdWorkThread=null;//进行建模或认证的全局工作线程
-    private void setupParam() {
-        bRun=true;
-        mdWorkThread=new Thread(runnablemol);
-        mdWorkThread.start();
-    }
+    boolean ret = false;
+    long start=0,end=0;
     Runnable  runnablemol=new Runnable() {
         @Override
         public void run() {
-            boolean ret = false;
             int[] tipTimes = {0, 0};//后两次次建模时用了不同手指，重复提醒限制3次
             int modOkProgress = 0;
-            while (bRun) {
+            Logger.e("FirstFragment"+"activity.bRun"+activity.bRun+"activity.bopen"+activity.bopen);
+            while (activity.bRun) {
+                if(!activity.bopen) {
+                Logger.e("FirstFragment"+"activity.bRun"+activity.bRun+"activity.bopen"+activity.bopen);
+                modOkProgress++;
+                activity.bopen = activity.microFingerVein.fvdev_open();//开启指定索引的设备
+                int cnt = activity.microFingerVein.fvdev_get_count();
+                if(cnt == 0){
+                    continue;
+                }
+                if (modOkProgress>10){
+//                       Utils.showPromptToast(getContext(),"请重启设备再试。。。");
+                    activity.bRun=false;
+                }
+                continue;
+            }
                 state = activity.microFingerVein.fvdev_get_state();
                 //设备连接正常则进入正常建模或认证流程
-//                Logger.e("BindActivty===========state"+state);
                 if (state != 0) {
                     time_start=false;
-                    timer.cancel();
-                    featuer=executeSql();
-                    Logger.e("FirstFragment===========state" + state);
-                    if (state == 1 || state == 2) {
-                        continue;
-                    } else if (state == 3) {
-                        try {
-                            Thread.sleep(200);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                    if (timer!=null) {
+                        timer.cancel();
                     }
-                    byte[] img = activity.microFingerVein.fvdev_grab();
+                    Logger.e("FirstFragment===========state" + state);
+                    byte[] img= MdFvHelper.tryGetFirstBestImg(activity.microFingerVein,0,5);
                     Logger.e("FirstFragment===========img" + img);
                     if (img == null) {
                         continue;
                     }
-                    if (featuer!=null) {
-                        ret = activity.microFingerVein.fv_index(featuer, featuer.length/ 3352, img, pos, score);
-                        Logger.e("FirstFragment_count"+"===========featuer.length"+featuer.length/3352+"pos"+pos[0]+"ret="+ret);
-                    }else {
+                    userUid=Finger_identify.Finger_identify(activity,img);
+                    if (userUid!=null){
                         if (handler != null) {
-                            Message message = new Message();
-                            message.what = 2;
-                            handler.sendMessage(message);
-                        }
-                    }
-                    if (ret == true && score[0] > 0.63) {
-                        Logger.e("Identify success,"+"pos=" + pos[0] + ", score=" + score[0]);
-                        if (handler != null) {
-                            Message message = new Message();
-                            message.what = 1;
-                            handler.sendMessage(message);
-                            bRun=false;
-                        }
-
-                    } else {
-                        if (handler != null) {
-                            Log.e("Identify failed,", "ret=" + ret + ",pos=" + pos[0] + ", score=" + score[0]);
-                            Message message = new Message();
-                            message.what = 7;
-                            handler.sendMessage(message);
+                            handler.obtainMessage(MSG_SHOW_SUCCESS,getResources().getString(R.string.check_successful)).sendToTarget();
                         }
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
+                    } else {
+                        if (handler != null) {
+                            Log.e("Identify failed,", "ret=" + ret + ",pos=" + pos[0] + ", score=" + score[0]);
+                            start = System.currentTimeMillis();
+
+                                Message message = new Message();
+                                message.what = 7;
+                                handler.sendMessage(message);
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }
                 else {
-                    if (time_start==false) {
+                    if (handler != null&&getContext()!=null) {
+                    handler.obtainMessage(MSG_SHOW_LOG,getResources().getString(R.string.finger_right)).sendToTarget();
+                }
+                    if (time_start==false&&timer!=null) {
                         try {
                             timer.start();
-                            Thread.sleep(500);
+                            Thread.sleep(1000);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                             e.printStackTrace();
                         }
-                    }
-                    if (handler != null) {
-                        Message message = new Message();
-                        message.what = 0;
-                        handler.sendMessage(message);
                     }
                 }
             }
         }
     };
+    EditText code_mumber;
+//    @OnClick({R.id.open_qrcode,R.id.open_finger})
+//    public void  OnClick(View view){
+//        switch (view.getId()){
+//            case R.id.open_finger:
+//                open_Layout.setVisibility(View.GONE);
+//                layout_three.setVisibility(View.VISIBLE);
+//                time_out();
+//                setupParam();
+//                break;
+//            case R.id.open_qrcode:
+//                open_Layout.setVisibility(View.GONE);
+//                code_layout.setVisibility(View.VISIBLE);
+//                code_mumber=(EditText)activity.findViewById(R.id.qrcode);
+//                code_mumber.setFocusable(true);
+//                code_mumber.setCursorVisible(true);
+//                code_mumber.setFocusableInTouchMode(true);
+//                code_mumber.requestFocus();
+//                /**
+//                 * EditText编辑框内容发生变化时的监听回调
+//                 */
+//                code_mumber.addTextChangedListener(new EditTextChangeListener());
+//                break;
+//        }
+//    }
+    public class EditTextChangeListener implements TextWatcher {
+        long lastTime;
+        /**
+         * 编辑框的内容发生改变之前的回调方法
+         */
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            Logger.e("MyEditTextChangeListener"+"beforeTextChanged---" + charSequence.toString());
+        }
+        /**
+         * 编辑框的内容正在发生改变时的回调方法 >>用户正在输入
+         * 我们可以在这里实时地 通过搜索匹配用户的输入
+         */
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            Logger.e("MyEditTextChangeListener"+"onTextChanged---" + charSequence.toString());
+        }
+        /**
+         * 编辑框的内容改变以后,用户没有继续输入时 的回调方法
+         */
+        @Override
+        public void afterTextChanged(Editable editable) {
+            String str=code_mumber.getText().toString();
+            Logger.e("MyEditTextChangeListener"+ "afterTextChanged---"+code_mumber.getText().toString());
+            if (str.contains("\n")) {
+                    if(System.currentTimeMillis()-lastTime<1500){
+                        code_mumber.setText("");
+                        return;
+                    }
+                    lastTime=System.currentTimeMillis();
+                    SharedPreferences userinfo = activity.getSharedPreferences("user_info", 0);
+                   String  deviceId = userinfo.getString("deviceId", "");
+                   ConnectivityManager connectivityManager;
+                    connectivityManager =(ConnectivityManager)activity.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+                    NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+                    if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+                                isopenCabinet.openByQrCode(0,deviceId, code_mumber.getText().toString());
+                    }
+                    code_mumber.setText("");
+            }
+        }
+    }
     @Override
     public void onError(ApiException e) {
+        isopen=0;
+        activity.bRun=false;
         super.onError(e);
         String reg = "[^\u4e00-\u9fa5]";
         String syt=e.getMessage().replaceAll(reg, "");
+        activity.mTts.startSpeaking(syt, activity.mTtsListener);
         Logger.e("FirstFragment"+syt);
-        Handler mainHandler = new Handler(Looper.getMainLooper());
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                text_error.setText(syt);
+        if (handler!=null) {
+            handler.obtainMessage(MSG_SHOW_LOG, syt).sendToTarget();
+            try {
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (((BindVeinMainFragment) getParentFragment()).bindViewPager.getCurrentItem() != 0) {
+                            ((BindVeinMainFragment) getParentFragment()).setFragment(0);
+                        }
+                    }
+                }, 5000);
+            } catch (Exception e1) {
+                e.printStackTrace();
             }
-        });
+        }
     }
-
     @Override
     public void onPermissionError(ApiException e) {
         onError(e);
     }
-
     @Override
     public void onResultError(ApiException e) {
         onError(e);
@@ -394,9 +518,36 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
     String lockplate;
     String opentime=null;
     CabinetRecordDao cabinetRecordDao;
+    int isopen=0;
+    ConnectivityManager connectivityManager;
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void messageEventBus(MessageEvent event){
+        Logger.e("FirstFragment"+"========messageEventBus+type="+event.type+"isopen=="+isopen);
+        if (event.type==0&&isopen<1) {
+            isopenCabinet = new IsopenCabinet();
+            isopenCabinet.attachView(this);
+            connectivityManager =(ConnectivityManager)activity.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+            NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+            if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+                starttime=System.currentTimeMillis();
+                if (starttime-lasttime>2000) {
+                    isopenCabinet.isopen(event.type, event.deviceId, event.userId, "vein");
+                    lasttime=System.currentTimeMillis();
+                }
+            }else {
+                activity.mTts.startSpeaking(getResources().getString(R.string.network_error),activity.mTtsListener);
+            }
+        }
+        isopen++;
+}
+long starttime=0,lasttime=0;
     @Override
     public void isopenSuccess(Lockdata resultResponse) {
+        isopen=0;
         isview=true;
+        if (timer!=null){
+        timer.cancel();
+        }
         layout_three.setVisibility(View.GONE);
         open_lock_layout.setVisibility(View.VISIBLE);
         cabinetNumberDao=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
@@ -412,10 +563,109 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
         if (number.length() == 11) {
             number = number.substring(0, 3) + "****" + number.substring(7, number.length());
         }
+            cabinetRecord.setPhoneNum(number);
+            cabinetRecord.setOpentime(opentime);
+            cabinetRecord.setIsUsed(getResources().getString(R.string.isuser));
+            cabinetRecord.setCabinetStating(getResources().getString(R.string.eposit_open));
+            cabinetRecord.setCabinetNumber(numstr);
+            cabinetRecordDao.insert(cabinetRecord);
+        cabinetRecordDao.loadAll();
+        List<CabinetRecord> users1 = qb1.where(CabinetRecordDao.Properties.CabinetNumber.eq(numstr)).build().list();
+        List<CabinetNumber> list;
+        list = qb.where(CabinetNumberDao.Properties.CabinetNumber.eq(users1.get(users1.size()-1).getCabinetNumber())).list();
+        if (list.size()!=0) {
+            Logger.e("FirstFragment"+"=============list.size"+list.size());
+            CabinetNumber cabinetNumber = new CabinetNumber();
+            cabinetNumber.setId(list.get(0).getId());
+            cabinetNumber.setCabinetLockPlate(list.get(0).getCabinetLockPlate());
+            cabinetNumber.setCircuitNumber(list.get(0).getCircuitNumber());
+            cabinetNumber.setCabinetNumber(list.get(0).getCabinetNumber());
+            cabinetNumber.setIsUser(getResources().getString(R.string.isuser));
+            cabinetNumberDao.update(cabinetNumber);
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                cabinet = qb.where(CabinetNumberDao.Properties.CabinetNumber.eq(numstr)).list();
+                if (cabinet.size() > 0) {
+                    Logger.e("FirstFragment" + numstr + "==========================" + cabinet.size());
+                    try {
+                        lockplate = cabinet.get(0).getCabinetLockPlate();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    nuberlock = Integer.parseInt(cabinet.get(0).getCircuitNumber());
+                    if (nuberlock > 10) {
+                        nuberlock = nuberlock % 10;
+                        Logger.e("FirstFragment===" + nuberlock);
+                        if (nuberlock == 0) {
+                            nuberlock = 10;
+                        }
+                    }
+                    try {
+                        if (Integer.parseInt(lockplate) <= 10) {
+                            activity.serialpprt_wk1.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate), nuberlock));
+                            Logger.e("FirstFragment===1" + Integer.parseInt(lockplate) + "====" + nuberlock);
+                        } else if (Integer.parseInt(lockplate) > 10 && Integer.parseInt(lockplate) <= 20) {
+                            activity.serialpprt_wk2.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate) % 10, nuberlock));
+                            Logger.e("FirstFragment===2" + Integer.parseInt(lockplate) + "====" + nuberlock);
+                        } else if (Integer.parseInt(lockplate) > 20 && Integer.parseInt(lockplate) <= 30) {
+                            activity.serialpprt_wk3.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate) % 10, nuberlock));
+                            Logger.e("FirstFragment===3" + Integer.parseInt(lockplate) + "====" + nuberlock);
+                        }
+                    } catch (Exception e) {
+                    } finally {
+                        if (timer != null) {
+                            timer.cancel();
+                        }
+                    }
+                }
+            }
+        }).start();
+
+        activity.mTts.startSpeaking(getResources().getString(R.string.open_1)+resultResponse.getLockdata().getCabinetnumber()+getResources().getString(R.string.open_2),activity.mTtsListener);
+//        Logger.e("opencabind==="+"CabinetLockPlate: "+users.get(0).getCabinetLockPlate()+"Cabinetnumber: "+resultResponse.getLockdata().getCabinetnumber()+"nuberlock: "+nuberlock);
+        text_number.setText(resultResponse.getLockdata().getCabinetnumber());
+        try {
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (((BindVeinMainFragment) getParentFragment()).bindViewPager.getCurrentItem()!=0) {
+                        ((BindVeinMainFragment) getParentFragment()).setFragment(0);
+                    }
+                }
+            }, 3000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void codeSuccess(Code_Message resultResponse) {
+        isopen=0;
+        isview=true;
+        if (timer!=null){
+            timer.cancel();
+        }
+        layout_three.setVisibility(View.GONE);
+        open_lock_layout.setVisibility(View.VISIBLE);
+        cabinetNumberDao=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
+        cabinetRecordDao=BaseApplication.getInstance().getDaoSession().getCabinetRecordDao();
+        String numstr=resultResponse.getData().getCabinetNumber();
+        QueryBuilder qb1 = cabinetRecordDao.queryBuilder();
+        QueryBuilder qb = cabinetNumberDao.queryBuilder();
+        cabinetNumberDao.loadAll();
+        List<CabinetRecord> users = qb1.where(CabinetRecordDao.Properties.CabinetNumber.eq(numstr)).build().list();
+        CabinetRecord cabinetRecord=new CabinetRecord();
+        cabinetRecord.setMemberName(resultResponse.getData().getName());
+        String number=resultResponse.getData().getNumberValue();
+        if (number.length() == 11) {
+            number = number.substring(0, 3) + "****" + number.substring(7, number.length());
+        }
         cabinetRecord.setPhoneNum(number);
         cabinetRecord.setOpentime(opentime);
-        cabinetRecord.setExist("1");
-        cabinetRecord.setCabinetStating("寄存物品");
+        cabinetRecord.setIsUsed(getResources().getString(R.string.isuser));
+        cabinetRecord.setCabinetStating(getResources().getString(R.string.eposit_open));
         cabinetRecord.setCabinetNumber(numstr);
         cabinetRecordDao.insert(cabinetRecord);
         cabinetRecordDao.loadAll();
@@ -429,7 +679,7 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
             cabinetNumber.setCabinetLockPlate(list.get(0).getCabinetLockPlate());
             cabinetNumber.setCircuitNumber(list.get(0).getCircuitNumber());
             cabinetNumber.setCabinetNumber(list.get(0).getCabinetNumber());
-            cabinetNumber.setIsUser("占用");
+            cabinetNumber.setIsUser(getResources().getString(R.string.isuser));
             cabinetNumberDao.update(cabinetNumber);
         }
         new Thread(new Runnable() {
@@ -442,46 +692,50 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
                 }catch (Exception e){
                     e.printStackTrace();
                 }
-                nuberlock=Integer.parseInt(cabinet.get(0).getCabinetNumber());
-              if (nuberlock>10){
-               nuberlock=nuberlock%10;
-              Logger.e("FirstFragment==="+nuberlock);
-              if (nuberlock==0){
-                nuberlock=10;
-              }
+                nuberlock=Integer.parseInt(cabinet.get(0).getCircuitNumber());
+                if (nuberlock>10){
+                    nuberlock=nuberlock%10;
+                    Logger.e("FirstFragment==="+nuberlock);
+                    if (nuberlock==0){
+                        nuberlock=10;
+                    }
                 }
                 try {
                     if (Integer.parseInt(lockplate)<=10) {
-                            activity.serialpprt_wk1.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate), nuberlock));
-                    }else if (Integer.parseInt(lockplate)>10&&Integer.parseInt(numstr)<=20){
+                        activity.serialpprt_wk1.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate), nuberlock));
+                        Logger.e("FirstFragment===1" + Integer.parseInt(lockplate) + "====" + nuberlock);
+                    }else if (Integer.parseInt(lockplate)>10&&Integer.parseInt(lockplate)<=20){
                         activity.serialpprt_wk2.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate)%10, nuberlock));
-                    }else if (Integer.parseInt(lockplate)>20&&Integer.parseInt(numstr)<=30){
+                        Logger.e("FirstFragment===2" + Integer.parseInt(lockplate) + "====" + nuberlock);
+                    }else if (Integer.parseInt(lockplate)>20&&Integer.parseInt(lockplate)<=30){
                         activity.serialpprt_wk3.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate)%10, nuberlock));
+                        Logger.e("FirstFragment===3" + Integer.parseInt(lockplate) + "====" + nuberlock);
                     }
-                    Logger.e("FirstFragment===" + Integer.parseInt(lockplate) + "====" + nuberlock);
                 }catch (Exception e){
                 }finally {
                     if (timer!=null) {
                         timer.cancel();
-
                     }
                 }
             }
         }).start();
 //        Logger.e("opencabind==="+"CabinetLockPlate: "+users.get(0).getCabinetLockPlate()+"Cabinetnumber: "+resultResponse.getLockdata().getCabinetnumber()+"nuberlock: "+nuberlock);
-        text_number.setText(resultResponse.getLockdata().getCabinetnumber());
+        text_number.setText(resultResponse.getData().getCabinetNumber());
+        activity.mTts.startSpeaking(getResources().getString(R.string.open_1)+resultResponse.getData().getCabinetNumber()+getResources().getString(R.string.open_2),activity.mTtsListener);
         try {
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    MainFragment mainFragment = MainFragment.newInstance();
-                    ((BindVeinMainFragment) getParentFragment()).addFragment(mainFragment, 1);
+                    if (((BindVeinMainFragment) getParentFragment()).bindViewPager.getCurrentItem()!=0) {
+                        ((BindVeinMainFragment) getParentFragment()).setFragment(0);
+                    }
                 }
             }, 3000);
         }catch (Exception e){
             e.printStackTrace();
         }
     }
+
     /**
      * 广播接收器
      *
@@ -490,27 +744,101 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
     public class MesReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            head_text_03.setText(intent.getStringExtra("timeStr"));
-            opentime=intent.getStringExtra("timeStr");
+            String time=intent.getStringExtra("timeStr");
+            head_text_03.setText(time);
             if (context == null) {
                 context.unregisterReceiver(this);
+            }else {
+                opentime=time;
             }
         }
     }
+    public static String Finger_identify (LockActivity activty, byte[] img){
+         float IDENTIFY_SCORE_THRESHOLD=0.63f;
+        SendLogMessageTastContract sendLogMessageTastContract;
+        int[]pos=new int[1];
+        float[]score=new float[1];
+        int i=0;
+        Cursor cursor;
+        String sql;
+        sql = "select FINGERMODEL,UID from PERSON" ;
+        cursor = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
+        byte[][] feature=new byte[cursor.getCount()][];
+        String [] Uids=new String[cursor.getCount()];
+        while (cursor.moveToNext()){
+            int nameColumnIndex = cursor.getColumnIndex("FINGERMODEL");
+            String strValue=cursor.getString(nameColumnIndex);
+            feature[i]=hexStringToByte(strValue);
+            Uids[i]=cursor.getString(cursor.getColumnIndex("UID"));
+            i++;
+        }
+        int len = 0;
+        // 计算一维数组长度
+        if(feature.length>0) {
+            for (byte[] element : feature) {
+                len += element.length;
+            }
+            // 复制元素
+            byte[]  nFeatuer = new byte[len];
+            int index = 0;
+            for (byte[] element : feature) {
+                for (byte element2 : element) {
+                    nFeatuer[index++] = element2;
+                }
+            }
+            boolean  identifyResult = activty.microFingerVein.fv_index(nFeatuer, nFeatuer.length / 3352, img, pos, score);//比对是否通过
+            identifyResult = identifyResult && score[0] > IDENTIFY_SCORE_THRESHOLD;//得分是否达标
+            DateFormat dateTimeformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            SharedPreferences userinfo=activty.getSharedPreferences("user_info",0);
+            String deviceId=userinfo.getString("deviceId","");
+            String Uid = Uids[pos[0]];
+            String uids= StringUtils.join(Uids,",");
+            String strBeginDate = dateTimeformat.format(new Date());
+            if (identifyResult) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Logger.e("SignActivity"+"pos="+pos+"score="+score);
+
+                        activty.sendLogMessageTastContract.sendLog(FileUtils.loadDataFromFile(activty,"deviceId.text"),Uid,uids,bytesToHexString(img),strBeginDate,score[0]+"","验证成功");
+
+                return Uid;
+            }else {
+                        activty.sendLogMessageTastContract.sendLog(FileUtils.loadDataFromFile(activty,"deviceId.text"),null,uids,bytesToHexString(img),strBeginDate,score[0]+"","验证成功");
+
+                return null;
+            }
+        }else {
+            return null;
+        }
+    }
+
+    @Override
+    public void onPause() {
+        activity.bRun=false;
+        super.onPause();
+    }
+
     @Override
     public void onDestroy() {
+        activity.unregisterReceiver(mesReceiver);//释放广播接收者
         Logger.e("FirstFragment"+"OnDestroy");
-        activity.microFingerVein.close(1);
-        bRun=false;
+        EventBus.getDefault().unregister(this);
+        ButterKnife.unbind(this);
+        activity.microFingerVein.close();
+        activity.bRun=false;
+        mdWorkThread=null;
+        runnablemol=null;
         isview=true;
         if (timer!=null) {
             timer.cancel();
         }
         if (handler!=null){
             handler.removeCallbacksAndMessages(null);
-            handler=null;
         }
-        activity.unregisterReceiver(mesReceiver);//释放广播接收者
         super.onDestroy();
     }
+
 }

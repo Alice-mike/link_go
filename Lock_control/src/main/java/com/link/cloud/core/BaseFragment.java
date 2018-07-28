@@ -57,18 +57,14 @@ public abstract class BaseFragment extends Fragment {
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
-
         super.setUserVisibleHint(isVisibleToUser);
-
         if (!isCreated) {
             return;
         }
-
         if (getUserVisibleHint()) {
             isVisble = true;
             onVisible();
         } else {
-
             isVisble = false;
             onInvisible();
         }
@@ -97,7 +93,6 @@ public abstract class BaseFragment extends Fragment {
         }
         isCreated = true;
         ButterKnife.bind(this, this.self);
-
         this.initViews(this.self, savedInstanceState);
         this.initData();
         this.initListeners();
@@ -119,7 +114,6 @@ public abstract class BaseFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        ButterKnife.unbind(this);
         isCreated = false;
     }
     /**

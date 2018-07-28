@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName;
  * Created by 30541 on 2018/6/25.
  */
 
-public class ResultHeartBeat{
+public class ResultHeartBeat {
     @SerializedName("data")
     Resultdata resultdata;
 

@@ -47,7 +47,6 @@ public class CheckUsedRecored extends Dialog{
         View view = LayoutInflater.from(mContext).inflate(R.layout.open_recored, null);
         setContentView(view);
         listView=(ListView)view.findViewById(R.id.open_recored);
-
         if (recordList.size()>0) {
             myAdapter = new RecordAdapter(recordList, mContext);
             listView.setAdapter(myAdapter);

@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.link.cloud.R;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.SignUserdata;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.BaseApplication;
@@ -163,6 +164,11 @@ public class PayFragment_Two extends BaseFragment implements MatchVeinTaskContra
     }
 
     @Override
+    public void checkInSuccess(Code_Message code_message) {
+
+    }
+
+    @Override
     protected void initListeners() {
     }
 
@@ -215,7 +221,7 @@ public class PayFragment_Two extends BaseFragment implements MatchVeinTaskContra
 //        }
 //    }
     @Override
-    public void signSuccess(SignUserdata signedResponse) {
+    public void signSuccess(Code_Message signedResponse) {
         Logger.e("SignFragment_Two-------signSuccess");
         this.showProgress(false);
         callBackValue.setActivtyChange("4");

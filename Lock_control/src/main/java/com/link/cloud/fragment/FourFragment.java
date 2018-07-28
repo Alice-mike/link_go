@@ -6,10 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -24,18 +22,14 @@ import com.link.cloud.R;
 import com.link.cloud.activity.LockActivity;
 import com.link.cloud.activity.WorkService;
 import com.link.cloud.base.ApiException;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.Lockdata;
-import com.link.cloud.bean.Member;
-import com.link.cloud.constant.Constant;
 import com.link.cloud.contract.IsopenCabinet;
 import com.link.cloud.core.BaseFragment;
 import com.link.cloud.greendao.gen.CabinetNumberDao;
 import com.link.cloud.greendao.gen.CabinetRecordDao;
-import com.link.cloud.greendao.gen.PersonDao;
 import com.link.cloud.greendaodemo.CabinetNumber;
 import com.link.cloud.greendaodemo.CabinetRecord;
-import com.link.cloud.greendaodemo.Person;
-
 import com.link.cloud.model.MdFvHelper;
 import com.link.cloud.utils.CountDownTimer;
 import com.link.cloud.utils.Finger_identify;
@@ -43,27 +37,16 @@ import com.link.cloud.utils.Utils;
 import com.orhanobut.logger.Logger;
 
 import org.greenrobot.greendao.query.QueryBuilder;
-import org.w3c.dom.Text;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
-import android_serialport_api.SerialPort;
 import butterknife.Bind;
 import butterknife.OnClick;
-import md.com.sdk.MicroFingerVein;
 
-import static com.alibaba.sdk.android.ams.common.util.HexUtil.hexStringToByte;
 /**
  * Created by 30541 on 2018/3/28.
  */
-public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen {
+public class FourFragment extends BaseFragment implements IsopenCabinet.isopen {
     @Bind(R.id.head_layout_01)
     RelativeLayout head_layout_01;
     @Bind(R.id.head_text_02)
@@ -115,8 +98,8 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
         openDoorUtil = new OpenDoorUtil();
         context=getContext();
     }
-    public static FirstFragment newInstance(String opentype) {
-        FirstFragment fragment = new FirstFragment();
+    public static FourFragment newInstance(String opentype) {
+        FourFragment fragment = new FourFragment();
         Bundle args = new Bundle();
         args.putString("opentype",opentype);
         fragment.setArguments(args);
@@ -124,24 +107,25 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
     }
     @Override
     protected void initListeners() {
+        setupParam();
         Logger.e("FirstFragment"+"======initListeners=======");
     }
     @Override
     protected void initViews(View self, Bundle savedInstanceState) {
         Logger.e("FirstFragment" + "======initViews=======");
+        time_out();
         Bundle bundle = getArguments();
         if (bundle != null) {
             opentype = bundle.getString("opentype");
             mesReceiver = new MesReceiver();
             IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction(LockActivity.ACTION_UPDATEUI);
-            intentFilter.addAction(LockActivity.ACTION_UPDATE);
+
             activity.registerReceiver(mesReceiver, intentFilter);
-            if ("1".equals(opentype)) {
+            if ("0".equals(opentype)) {
                 head_text_02.setText("寄存物品");
-            }else if ("2".equals(opentype)){
+            }else if ("1".equals(opentype)){
                 head_text_02.setText("临时存件");
-            }else if("3".equals(opentype)){
+            }else if("2".equals(opentype)){
                 head_text_02.setText("离场退柜");
             }
             text_error.setText("请正确放置手指...");
@@ -160,7 +144,6 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
     }
     @Override
     protected void onVisible() {
-        setupParam();
         Logger.e("FirstFragment"+"======onVisible=======");
     }
     @Override
@@ -177,7 +160,7 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
                 if (Utils.isFastClick()) {
                     isview = true;
                     MainFragment mainFragment = MainFragment.newInstance();
-                    ((BindVeinMainFragment) getParentFragment()).addFragment(mainFragment, 0);
+                    ((BindVeinMainFragment) getParentFragment()).setFragment(0);
                 }
                 break;
         }
@@ -206,12 +189,12 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
         @Override
         public void onFinish() {
             MainFragment mainFragment = MainFragment.newInstance();
-            ((BindVeinMainFragment) getParentFragment()).addFragment(mainFragment, 0);
+            ((BindVeinMainFragment) getParentFragment()).setFragment(0);
         }
     };
 }
     Handler handler = new Handler() {
-        public void handleMessage(android.os.Message msg) {
+        public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_SHOW_START:
                     if(msg.obj!=null&&text_error!=null) {
@@ -219,9 +202,14 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
                     }
                     break;
                 case MSG_SHOW_SUCCESS:
-                    bRun=false;
+                    handler.removeMessages(MSG_SHOW_SUCCESS);
                     if(msg.obj!=null&&text_error!=null) {
                         text_error.setText("验证成功");
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                     SharedPreferences userinfo = activity.getSharedPreferences("user_info", 0);
                     String deviceId = userinfo.getString("deviceId", "");
@@ -230,20 +218,20 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
                                 @Override
                                 public void run() {
                                     int type=0;
-                                    if ("1".equals(opentype)){
+                                    if ("0".equals(opentype)){
                                         type=0;
-                                    }else if ("2".equals(opentype)){
+                                    }else if ("1".equals(opentype)){
                                         type=1;
-                                    }else if ("3".equals(opentype)){
+                                    }else if ("2".equals(opentype)){
                                         type=2;
                                     }
                                     isopenCabinet.isopen(type, deviceId, userUid, "vein");
                                 }
                             }).start();
                     break;
-                case 2:
-                    text_error.setText("暂无签到数据");
-                    break;
+//                case 2:
+//                    text_error.setText("暂无签到数据");
+//                    break;
                 case MSG_SHOW_LOG:
                     if (text_error!=null) {
                         if (msg.obj != null && handler != null) {
@@ -254,8 +242,12 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
                 case 7:
                     if (context!=null) {
                         text_error.setText("验证失败...");
-                    }
-                    break;
+                    }  try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                  break;
                 case 8:
                     text_error.setText("请移开手指");
                     break;
@@ -284,14 +276,11 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
                         continue;
                     }
                    if (modOkProgress>10){
-//                       Utils.showPromptToast(getContext(),"请重启设备再试。。。");
                        bRun=false;
                    }
                     continue;
                 }
                 state = activity.microFingerVein.fvdev_get_state();
-                //设备连接正常则进入正常建模或认证流程
-//                Logger.e("BindActivty===========state"+state);
                 if (state != 0) {
                     time_start=false;
                     Logger.e("FirstFragment===========state" + state);
@@ -305,20 +294,10 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
                         if (handler != null) {
                             handler.obtainMessage(MSG_SHOW_SUCCESS,"验证成功").sendToTarget();
                         }
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
                     }else {
                         if (handler != null) {
                             Log.e("Identify failed,", "ret=" + ret + ",pos=" + pos[0] + ", score=" + score[0]);
                             handler.obtainMessage(MSG_SHOW_LOG,"验证失败").sendToTarget();
-                        }
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
                         }
                     }
                 }
@@ -344,26 +323,23 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
         bRun=false;
         String reg = "[^\u4e00-\u9fa5]";
         String syt=e.getMessage().replaceAll(reg, "");
-        Logger.e("FirstFragment"+syt);
         handler.obtainMessage(MSG_SHOW_LOG,syt).sendToTarget();
         try {
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     MainFragment mainFragment = MainFragment.newInstance();
-                    ((BindVeinMainFragment) getParentFragment()).addFragment(mainFragment, 1);
+                    ((BindVeinMainFragment) getParentFragment()).setFragment(0);
                 }
             }, 5000);
         }catch (Exception e1){
             e.printStackTrace();
         }
     }
-
     @Override
     public void onPermissionError(ApiException e) {
         onError(e);
     }
-
     @Override
     public void onResultError(ApiException e) {
         onError(e);
@@ -375,97 +351,111 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
     CabinetRecordDao cabinetRecordDao;
     @Override
     public void isopenSuccess(Lockdata resultResponse) {
-        isview=true;
-        layout_three.setVisibility(View.GONE);
-        open_lock_layout.setVisibility(View.VISIBLE);
-        cabinetNumberDao=BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
-        cabinetRecordDao=BaseApplication.getInstance().getDaoSession().getCabinetRecordDao();
-        String numstr=resultResponse.getLockdata().getCabinetnumber();
-        QueryBuilder qb1 = cabinetRecordDao.queryBuilder();
-        QueryBuilder qb = cabinetNumberDao.queryBuilder();
-        cabinetNumberDao.loadAll();
-        List<CabinetRecord> users = qb1.where(CabinetRecordDao.Properties.CabinetNumber.eq(numstr)).build().list();
-        CabinetRecord cabinetRecord=new CabinetRecord();
-        cabinetRecord.setMemberName(resultResponse.getLockdata().getName());
-        String number=resultResponse.getLockdata().getNumberValue();
-        if (number.length() == 11) {
-            number = number.substring(0, 3) + "****" + number.substring(7, number.length());
-        }
-        cabinetRecord.setPhoneNum(number);
-        cabinetRecord.setOpentime(opentime);
-        cabinetRecord.setExist("1");
-        if ("1".equals(opentype)) {
-            cabinetRecord.setCabinetStating("寄存物品");
-        }else if ("2".equals(opentype)){
-            cabinetRecord.setCabinetStating("临时存件");
-        }else if ("3".equals(opentype)){
-            cabinetRecord.setCabinetStating("离场退柜");
-        }
-        cabinetRecord.setCabinetNumber(numstr);
-        cabinetRecordDao.insert(cabinetRecord);
-        cabinetRecordDao.loadAll();
-        List<CabinetRecord> users1 = qb1.where(CabinetRecordDao.Properties.CabinetNumber.eq(numstr)).build().list();
-        List<CabinetNumber> list;
-        list = qb.where(CabinetNumberDao.Properties.CabinetNumber.eq(users1.get(users1.size()-1).getCabinetNumber())).list();
-        if (list.size()!=0) {
-            Logger.e("FirstFragment"+"=============list.size"+list.size());
-            CabinetNumber cabinetNumber = new CabinetNumber();
-            cabinetNumber.setId(list.get(0).getId());
-            cabinetNumber.setCabinetLockPlate(list.get(0).getCabinetLockPlate());
-            cabinetNumber.setCircuitNumber(list.get(0).getCircuitNumber());
-            cabinetNumber.setCabinetNumber(list.get(0).getCabinetNumber());
-            cabinetNumber.setIsUser("占用");
-            cabinetNumberDao.update(cabinetNumber);
-        }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                cabinet = qb.where(CabinetNumberDao.Properties.CabinetNumber.eq(numstr)).list();
-                Logger.e("FirstFragment"+numstr+"=========================="+cabinet.size());
-                try {
-                    lockplate=cabinet.get(0).getCabinetLockPlate();
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-                nuberlock=Integer.parseInt(cabinet.get(0).getCabinetNumber());
-              if (nuberlock>10){
-               nuberlock=nuberlock%10;
-              Logger.e("FirstFragment==="+nuberlock);
-              if (nuberlock==0){
-                nuberlock=10;
-              }
-                }
-                try {
-                    if (Integer.parseInt(lockplate)<=10) {
-                            activity.serialpprt_wk1.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate), nuberlock));
-                    }else if (Integer.parseInt(lockplate)>10&&Integer.parseInt(numstr)<=20){
-                        activity.serialpprt_wk2.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate)%10, nuberlock));
-                    }else if (Integer.parseInt(lockplate)>20&&Integer.parseInt(numstr)<=30){
-                        activity.serialpprt_wk3.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate)%10, nuberlock));
-                    }
-                    Logger.e("FirstFragment===" + Integer.parseInt(lockplate) + "====" + nuberlock);
-                }catch (Exception e){
-                }finally {
-                    if (timer!=null) {
-                        timer.cancel();
-                    }
-                }
+        if(resultResponse.getStatus()==0) {
+            isview = true;
+            layout_three.setVisibility(View.GONE);
+            open_lock_layout.setVisibility(View.VISIBLE);
+            cabinetNumberDao = BaseApplication.getInstances().getDaoSession().getCabinetNumberDao();
+            cabinetRecordDao = BaseApplication.getInstance().getDaoSession().getCabinetRecordDao();
+            String numstr = resultResponse.getLockdata().getCabinetnumber();
+            QueryBuilder qb1 = cabinetRecordDao.queryBuilder();
+            QueryBuilder qb = cabinetNumberDao.queryBuilder();
+            cabinetNumberDao.loadAll();
+            List<CabinetRecord> users = qb1.where(CabinetRecordDao.Properties.CabinetNumber.eq(numstr)).build().list();
+            CabinetRecord cabinetRecord = new CabinetRecord();
+            cabinetRecord.setMemberName(resultResponse.getLockdata().getName());
+            String number = resultResponse.getLockdata().getNumberValue();
+            if (number.length() == 11) {
+                number = number.substring(0, 3) + "****" + number.substring(7, number.length());
             }
-        }).start();
-//        Logger.e("opencabind==="+"CabinetLockPlate: "+users.get(0).getCabinetLockPlate()+"Cabinetnumber: "+resultResponse.getLockdata().getCabinetnumber()+"nuberlock: "+nuberlock);
-        text_number.setText(resultResponse.getLockdata().getCabinetnumber());
-        try {
-            handler.postDelayed(new Runnable() {
+            cabinetRecord.setPhoneNum(number);
+            cabinetRecord.setOpentime(opentime);
+            if ("0".equals(opentype)) {
+                cabinetRecord.setCabinetStating("寄存物品");
+                cabinetRecord.setExist("1");
+            } else if ("1".equals(opentype)) {
+                cabinetRecord.setCabinetStating("临时存件");
+                cabinetRecord.setExist("1");
+            } else if ("2".equals(opentype)) {
+                cabinetRecord.setCabinetStating("离场退柜");
+                cabinetRecord.setExist("0");
+            }
+            cabinetRecord.setCabinetNumber(numstr);
+            cabinetRecordDao.insert(cabinetRecord);
+            cabinetRecordDao.loadAll();
+            List<CabinetRecord> users1 = qb1.where(CabinetRecordDao.Properties.CabinetNumber.eq(numstr)).build().list();
+            List<CabinetNumber> list;
+            list = qb.where(CabinetNumberDao.Properties.CabinetNumber.eq(users1.get(users1.size() - 1).getCabinetNumber())).list();
+            if (list.size() != 0) {
+                Logger.e("FirstFragment" + "=============list.size" + list.size());
+                CabinetNumber cabinetNumber = new CabinetNumber();
+                cabinetNumber.setId(list.get(0).getId());
+                cabinetNumber.setCabinetLockPlate(list.get(0).getCabinetLockPlate());
+                cabinetNumber.setCircuitNumber(list.get(0).getCircuitNumber());
+                cabinetNumber.setCabinetNumber(list.get(0).getCabinetNumber());
+                if ("0".equals(opentype)) {
+                    cabinetNumber.setIsUser("占用");
+                } else if ("2".equals(opentype)) {
+                    cabinetNumber.setIsUser("空闲");
+                }
+                cabinetNumberDao.update(cabinetNumber);
+            }
+            new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    MainFragment mainFragment = MainFragment.newInstance();
-                    ((BindVeinMainFragment) getParentFragment()).addFragment(mainFragment, 1);
+                    cabinet = qb.where(CabinetNumberDao.Properties.CabinetNumber.eq(numstr)).list();
+                    Logger.e("FirstFragment" + numstr + "==========================" + cabinet.size());
+                    try {
+                        lockplate = cabinet.get(0).getCabinetLockPlate();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    nuberlock = Integer.parseInt(cabinet.get(0).getCabinetNumber());
+                    if (nuberlock > 10) {
+                        nuberlock = nuberlock % 10;
+                        Logger.e("FirstFragment===" + nuberlock);
+                        if (nuberlock == 0) {
+                            nuberlock = 10;
+                        }
+                    }
+                    try {
+                        if (Integer.parseInt(lockplate) <= 10) {
+                            activity.serialpprt_wk1.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate), nuberlock));
+                        } else if (Integer.parseInt(lockplate) > 10 && Integer.parseInt(numstr) <= 20) {
+                            activity.serialpprt_wk2.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate) % 10, nuberlock));
+                        } else if (Integer.parseInt(lockplate) > 20 && Integer.parseInt(numstr) <= 30) {
+                            activity.serialpprt_wk3.getOutputStream().write(openDoorUtil.openOneDoor(Integer.parseInt(lockplate) % 10, nuberlock));
+                        }
+                        Logger.e("FirstFragment===" + Integer.parseInt(lockplate) + "====" + nuberlock);
+                    } catch (Exception e) {
+                    } finally {
+                        if (timer != null) {
+                            timer.cancel();
+                        }
+                    }
                 }
-            }, 3000);
-        }catch (Exception e){
-            e.printStackTrace();
+            }).start();
+            text_number.setText(resultResponse.getLockdata().getCabinetnumber());
+            bRun = false;
+            try {
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        MainFragment mainFragment = MainFragment.newInstance();
+                        ((BindVeinMainFragment) getParentFragment()).setFragment(0);
+                    }
+                }, 3000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
+
+    @Override
+    public void codeSuccess(Code_Message resultResponse) {
+
+    }
+
     /**
      * 广播接收器
      *
@@ -475,10 +465,11 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
         @Override
         public void onReceive(Context context, Intent intent) {
             head_text_03.setText(intent.getStringExtra("timeStr"));
+            opentime=intent.getStringExtra("timeStr");
             if (context == null) {
                 context.unregisterReceiver(this);
             }else {
-                opentime=intent.getStringExtra("timeStr");
+
             }
         }
     }
@@ -490,6 +481,7 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
         if (handler!=null){
             handler.removeCallbacksAndMessages(null);
         }
+
         super.onDestroy();
     }
 

@@ -7,7 +7,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.view.View;
 
 import com.link.cloud.BuildConfig;
@@ -20,7 +19,6 @@ import com.orhanobut.logger.Logger;
 import java.util.ArrayList;
 
 import butterknife.Bind;
-import md.com.sdk.MicroFingerVein;
 
 public class BindVeinMainFragment extends BaseFragment {
 
@@ -29,6 +27,10 @@ public class BindVeinMainFragment extends BaseFragment {
     SectionsPagerAdapter mSectionsPagerAdapter;
     ArrayList<Fragment> fragments;
     private MainFragment mainFragment;
+    private FirstFragment memberInfoFragment;
+    private SecondFragment memberInfoFragment1;
+    private ThirdFragment memberInfoFragment2;
+
     public static BindVeinMainFragment newInstance(Fragment... fragments) {
         BindVeinMainFragment fragment = new BindVeinMainFragment();
         Bundle args = new Bundle();
@@ -54,6 +56,11 @@ public class BindVeinMainFragment extends BaseFragment {
         initAdapter();
     }
 
+    public  int index() {
+//        return bindViewPager.getCurrentItem();
+        return 0;
+    }
+
     private void initAdapter() {
         if (mSectionsPagerAdapter == null) {
             mSectionsPagerAdapter = new SectionsPagerAdapter(getChildFragmentManager());
@@ -63,37 +70,40 @@ public class BindVeinMainFragment extends BaseFragment {
 
     @Override
     protected void initListeners() {
-        bindViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            private int currentPosition = 0;
-            private int prevPosition = 0;
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                prevPosition = currentPosition;
-                currentPosition = position;
-                if (currentPosition == 0) {
-                    //重置电话号码与验证码
-//                    registerFragment.etPhoneNum.setText("");
-                }
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-                if (state == 0) {
-//                    Logger.e("onPageScrollStateChanged prevPosition:" + prevPosition);
-                    if (prevPosition > 0) {
-                        mSectionsPagerAdapter.destroyItem(prevPosition);
-                    }
-                }
-            }
-        });
+//        bindViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+//            private int currentPosition = 0;
+//            private int prevPosition = 0;
+//
+//            @Override
+//            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+//            }
+//
+//            @Override
+//            public void onPageSelected(int position) {
+//                prevPosition = currentPosition;
+//                currentPosition = position;
+//                if (currentPosition == 0) {
+//                    //重置电话号码与验证码
+////                    registerFragment.etPhoneNum.setText("");
+//                }
+//            }
+//
+//            @Override
+//            public void onPageScrollStateChanged(int state) {
+//                if (state == 0) {
+////                    Logger.e("onPageScrollStateChanged prevPosition:" + prevPosition);
+//                    if (prevPosition > 0) {
+//                        mSectionsPagerAdapter.destroyItem(prevPosition);
+//                    }
+//                }
+//            }
+//        });
     }
+
     @Override
     protected void initData() {
     }
+
     @Override
     protected void onVisible() {
         if (BuildConfig.DEBUG) Logger.e("BindVeinMainFragment->onVisible");
@@ -123,11 +133,34 @@ public class BindVeinMainFragment extends BaseFragment {
         super.onResume();
     }
 
-    public void addFragment(Fragment fragment, int index) {
-        fragments.add(index, fragment);
-        mSectionsPagerAdapter.notifyDataSetChanged();
-        bindViewPager.setCurrentItem(index);
+    public void setFragment(int index) {
+        if (fragments.size() < 3) {
+                memberInfoFragment = FirstFragment.newInstance();
+                fragments.add(memberInfoFragment);
+                memberInfoFragment1 = SecondFragment.newInstance();
+                fragments.add(memberInfoFragment1);
+                memberInfoFragment2 = ThirdFragment.newInstance();
+                fragments.add(memberInfoFragment2);
+        }else{
+            if (!memberInfoFragment.isAdded()) {
+                memberInfoFragment = FirstFragment.newInstance();
+                fragments.add(1,memberInfoFragment);
+            }
+            if (!memberInfoFragment1.isAdded()) {
+                memberInfoFragment1 = SecondFragment.newInstance();
+                fragments.add(2,memberInfoFragment1);
+            }
+            if (!memberInfoFragment2.isAdded()) {
+                memberInfoFragment2 = ThirdFragment.newInstance();
+                fragments.add(3,memberInfoFragment2);
+            }
+
+        }
+        if (bindViewPager.getCurrentItem()!=index) {
+            bindViewPager.setCurrentItem(index);
+        }
     }
+
 
     public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
@@ -146,7 +179,6 @@ public class BindVeinMainFragment extends BaseFragment {
         public void destroyItem(int position) {
             if (position < fragments.size()) {
                 super.destroyItem(bindViewPager, position, fragments.get(position));
-                fragments.remove(position);
                 this.notifyDataSetChanged();
             }
         }

@@ -42,7 +42,6 @@ public class ProgressHUD extends Dialog implements Runnable {
         getWindow().setBackgroundDrawable(new ColorDrawable(getContext().getResources().getColor(android.R.color.transparent)));
         getWindow().setGravity(Gravity.CENTER);
         getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
-
         View rootView = getLayoutInflater().inflate(R.layout.dialog_hud, null);
         setContentView(rootView);
         progress = (ProgressBar) findViewById(R.id.DialogHud_Progress);

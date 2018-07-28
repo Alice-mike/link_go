@@ -17,7 +17,7 @@ public class MyReceiver extends BroadcastReceiver {
     {
         if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
         {
-            Intent i = new Intent(context, LockActivity.class);
+            Intent i = new Intent(context, WelcomeActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(i);
         }

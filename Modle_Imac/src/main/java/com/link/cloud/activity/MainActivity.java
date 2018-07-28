@@ -92,7 +92,6 @@ public class MainActivity extends Activity {
             }
         };
     };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.i("tag","启动");
@@ -105,9 +104,7 @@ public class MainActivity extends Activity {
 //            String[] permission = {Manifest.permission.READ_EXTERNAL_STORAGE };
 //            requestPermissions(permission, 0);
 //        }
-
         Permition.verifyStoragePermissions(this);//检验外部存储器访问权限
-
         Text = (EditText) findViewById(R.id.show_log);
         //认证
         button = (Button)findViewById(R.id.identify);
@@ -125,7 +122,6 @@ public class MainActivity extends Activity {
                 }
             }
         });
-
         //建模
         findViewById(R.id.model).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -139,18 +135,13 @@ public class MainActivity extends Activity {
                 }
             }
         });
-
-        //start thread
-//        run();
     }
-
     @Override
     protected void onStart() {
         super.onStart();
 //        Text=(EditText)findViewById(R.id.show_log);
 //        Log.e("MainActivity=========",Text.getText().toString()+"");
     }
-
 //    protected void run()
     {
 //        ret = MicroFingerVein.fvdevOpen();
@@ -177,7 +168,6 @@ public class MainActivity extends Activity {
         }).start();
 //        MicroFingerVein.fvdevClose();
     }
-
 //    private void identify_process()
 //    {
 //        try {
@@ -191,7 +181,6 @@ public class MainActivity extends Activity {
 //            MicroFingerVein.fvdevOpen();
 //            return;
 //        }
-//
 //        if (state[0] != 3) {
 //            return;
 //        }
@@ -200,7 +189,6 @@ public class MainActivity extends Activity {
 //        if (img1 == null) {
 //            return;
 //        }
-//
 //        ret = MicroFingerVein.fvSearchFeature(feauter1, 1, img1, pos, score);
 //        if (ret == true && score[0] > 0.63) {
 //            Log.e("Identify success,", "pos=" + pos[0] + ", score=" + score[0]);
@@ -214,7 +202,6 @@ public class MainActivity extends Activity {
 //            MicroFingerVein.fvdevGetState(state);
 //        }
 //    }
-
     private void model_process()
     {
         //firstly
@@ -224,13 +211,11 @@ public class MainActivity extends Activity {
         if (ret != true) {
             return;
         }
-
         try {
             Thread.sleep(300);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
         //secondly
         Log.e("secondly model", "put your finger...");
         handler.sendEmptyMessage(6);
@@ -238,7 +223,6 @@ public class MainActivity extends Activity {
         if (ret != true) {
             return;
         }
-
         //thirdly
         Log.e("third model", "put your finger...");
         handler.sendEmptyMessage(7);
@@ -246,7 +230,6 @@ public class MainActivity extends Activity {
         if (ret != true) {
             return;
         }
-
         Log.e("model", "ok");
         handler.sendEmptyMessage(11);
     }
@@ -264,7 +247,6 @@ public class MainActivity extends Activity {
 //                MicroFingerVein.fvdevOpen();
 //                continue;
 //            }
-//
 //            if (state[0] != 0) {
 //                img1 = MicroFingerVein.fvdevGrabImage();
 //                if (img1 == null)

@@ -30,7 +30,7 @@
     </FrameLayout>
 <LinearLayout
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="horizontal">
     <View
         android:layout_width="match_parent"
@@ -83,6 +83,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_marginBottom="20dp"
+                android:splitMotionEvents="false"
                 android:orientation="horizontal">
                 <Button
                     android:layout_weight="1"
@@ -103,6 +104,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:splitMotionEvents="false"
                 android:orientation="horizontal"
                 android:layout_marginTop="20px">
                 <Button
@@ -120,14 +122,17 @@
                     android:background="@drawable/index_bt_p"/>
             </LinearLayout>
         </LinearLayout>
-<LinearLayout
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center">
+    <LinearLayout
     android:layout_marginTop="40px"
     android:layout_width="280px"
     android:layout_height="80px"
     android:layout_gravity="center"
-    android:gravity="center"
-    android:layout_marginBottom="60px"
-    >
+    android:gravity="center">
             <Button
                 android:background="@drawable/main_botton"
                 android:id="@+id/bt_main_bind"
@@ -143,6 +148,21 @@
                 android:paddingBottom="5dp"
                 android:gravity="center"/>
     </LinearLayout>
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="100px">
+        <TextView
+        android:layout_marginLeft="10dp"
+        android:layout_marginBottom="10dp"
+        android:id="@+id/versionName"
+        android:textColor="@color/white"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:text="2.2.4"
+        />
+    </RelativeLayout>
+        </LinearLayout>
 </LinearLayout>
     <View
         android:layout_width="match_parent"
@@ -150,4 +170,20 @@
         android:layout_weight="4"
         />
 </LinearLayout>
+    <!--<RelativeLayout-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="100px">-->
+        <!--<TextView-->
+            <!--android:layout_alignParentLeft="true"-->
+            <!--android:layout_alignParentBottom="true"-->
+            <!--android:layout_marginLeft="10dp"-->
+            <!--android:layout_marginBottom="10dp"-->
+            <!--android:id="@+id/versionName"-->
+            <!--android:textColor="@color/white"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:textSize="@dimen/text_size_30sp"-->
+            <!--android:text=""-->
+            <!--/>-->
+    <!--</RelativeLayout>-->
 </LinearLayout>

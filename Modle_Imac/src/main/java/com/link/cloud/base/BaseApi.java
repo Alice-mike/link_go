@@ -62,12 +62,12 @@ public class BaseApi {
                     Cache cache = new Cache(new File(BaseApplication.getInstance().getApplicationContext().getCacheDir(), "HttpCache"),
                             1024 * 1024 * 100);
                     mOkHttpClient = new OkHttpClient.Builder()
+                            .retryOnConnectionFailure(false)
                             .cache(cache)
                             .addInterceptor(mRewriteCacheControlInterceptor)
                             .addNetworkInterceptor(mRewriteCacheControlInterceptor)
                             .addInterceptor(interceptor)
-//                            .retryOnConnectionFailure(true)
-                            .connectTimeout(20, TimeUnit.SECONDS)
+                            .connectTimeout(30, TimeUnit.SECONDS)
                             .readTimeout(20, TimeUnit.SECONDS)//设置读取超时时间
                             .writeTimeout(20, TimeUnit.SECONDS)//设置写入超时时间
                             .build();

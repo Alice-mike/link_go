@@ -1,7 +1,6 @@
 package com.link.cloud.bean;
 
 import com.google.gson.annotations.SerializedName;
-import com.link.cloud.base.Signdata;
 
 /**
  * Created by 30541 on 2018/3/10.

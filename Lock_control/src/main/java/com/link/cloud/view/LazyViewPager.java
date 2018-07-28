@@ -1,4 +1,4 @@
-package cn.itcast.zz.zhbj20.view;
+package com.link.cloud.view;
 
 /*
  * Copyright (C) 2011 The Android Open Source Project
@@ -72,7 +72,6 @@ public class LazyViewPager extends ViewGroup {
     //屏蔽预加载功能
     private static final int DEFAULT_OFFSCREEN_PAGES = 0;//默认viewpager当前变量的值1
     private static final int MAX_SETTLE_DURATION = 600; //
-
     static class ItemInfo {
         Object object;
         int position;
@@ -80,8 +79,8 @@ public class LazyViewPager extends ViewGroup {
     }
 
     private static final Comparator<ItemInfo> COMPARATOR = new Comparator<ItemInfo>(){
-        @Override
-        public int compare(ItemInfo lhs, ItemInfo rhs) {
+    @Override
+    public int compare(ItemInfo lhs, ItemInfo rhs) {
             return lhs.position - rhs.position;
         }};
 

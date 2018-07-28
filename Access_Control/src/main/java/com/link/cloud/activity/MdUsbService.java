@@ -1,17 +1,10 @@
-package com.md.rec;
+package com.link.cloud.activity;
 
-import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbManager;
 import android.os.Binder;
-import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
 
 import md.com.sdk.MicroFingerVein;
@@ -78,7 +71,7 @@ public class MdUsbService extends Service {
          *  @param usbManufacturerName manufacturer name of the new usb device;
          *  @param usbDeviceName device name of the new usb device;
          */
-        void onUsbConnSuccess(String usbManufacturerName,String usbDeviceName);
+        void onUsbConnSuccess(String usbManufacturerName, String usbDeviceName);
         /**
          *  when the md usb device disconnected;
          */
@@ -93,7 +86,7 @@ public class MdUsbService extends Service {
     public void onCreate() {
         super.onCreate();
         Log.e(TAG,"onCreate");
-        microFingerVein=MicroFingerVein.getInstance(this);
+        microFingerVein= MicroFingerVein.getInstance(this);
     }
 
     @Override

@@ -2,23 +2,24 @@ package com.link.cloud.base;
 
 import com.google.gson.JsonObject;
 import com.link.cloud.bean.CodeInfo;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
-import com.link.cloud.bean.LessonResponse;
 import com.link.cloud.bean.Member;
-import com.link.cloud.bean.MessagetoJson;
+import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.RestResponse;
+import com.link.cloud.bean.ResultHeartBeat;
 import com.link.cloud.bean.RetrunLessons;
 import com.link.cloud.bean.ReturnBean;
 import com.link.cloud.bean.SignUserdata;
-import com.link.cloud.bean.SignedResponse;
+import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.bean.UserResponse;
 import com.link.cloud.bean.Voucher;
 
 import retrofit2.http.Body;
 import retrofit2.http.POST;
-import retrofit2.http.Path;
 import rx.Observable;
 
 /**
@@ -36,6 +37,12 @@ public interface BaseService {
 //    Observable<Member> getMemInfo( @Body JsonObject params);
     @POST("validationUser")
     Observable<Member> getMemInfo( @Body JsonObject params);
+
+    @POST("getNotReveiceFeature")
+    Observable<DownLoadData>downloadNotReceiver(@Body JsonObject params);
+
+    @POST("appUpdateInfo")
+    Observable<UpDateBean>appUpdateInfo(@Body JsonObject params);
     /**
      * 2.指静脉设备绑定会员接口
      *
@@ -71,8 +78,6 @@ public interface BaseService {
      */
     @POST("queryMemCardByMemID")
     Observable<ReturnBean> getCardInfo(@Body JsonObject params);
-
-
     /**
      * 6.会员的上次签到时间
      *
@@ -81,16 +86,14 @@ public interface BaseService {
      */
     @POST("getLastSignedTime")
     Observable<ReturnBean> getLastSignedTime(@Body JsonObject params);
-
-
     /**
-     * 7.会员签到
+     * 7.发送日志信息
      *
      * @param params REQUEST BODY请求体
      * @return Observable<ReturnBean>
      */
-    @POST("checkIn")
-    Observable<ReturnBean> signedMember(@Body JsonObject params);
+    @POST("validateLogs")
+    Observable<RestResponse> sendLogMessage(@Body JsonObject params);
 
     /**
      * 8.指静脉消费接口
@@ -100,7 +103,6 @@ public interface BaseService {
      */
     @POST("consumeRecord")
     Observable<Voucher> consumeRecord(@Body JsonObject params);
-
     /**
      * 9.新增签到接口 员工&会员签到
      *
@@ -108,8 +110,7 @@ public interface BaseService {
      * @return Observable<ReturnBean>
      */
     @POST("checkIn")
-    Observable<SignUserdata> signMember(@Body JsonObject params);
-
+    Observable<Code_Message> signMember(@Body JsonObject params);
     /**
      * 10.用户消课指静脉验证接口
      */
@@ -135,12 +136,15 @@ public interface BaseService {
      */
     @POST("deviceUpgrade")
     Observable<UpdateMessage>deviceUpgrade(@Body JsonObject params);
-
+    /**
+     * 2.心跳包
+     */
+    @POST("deviceHeartBeat")
+    Observable<ResultHeartBeat>deviceHeartBeat(@Body JsonObject params);
     //2018
     @POST("deviceRegister")
     //13.获取设备id
     Observable<DeviceData>getdeviceId(@Body JsonObject params);
-
     /**
      * 同步接口
      * @param params
@@ -155,4 +159,13 @@ public interface BaseService {
      */
     @POST("downloadFeature")
     Observable<DownLoadData>downloadFeature(@Body JsonObject params);
+
+    @POST("syncUserFeatureCount")
+    Observable<PagesInfoBean>getPagesInfo(@Body JsonObject params);
+
+    @POST("syncUserFeaturePages")
+    Observable<SyncFeaturesPage>syncUserFeaturePages(@Body JsonObject params);
+
+    @POST("checkInByQrCode")
+    Observable<Code_Message>checkInByQrCode(@Body JsonObject paras);
 }

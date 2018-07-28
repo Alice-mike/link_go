@@ -57,7 +57,7 @@ public class LessonDownActivity extends BaseAppCompatActivity implements CallBac
     @Bind(R.id.layout_page_title)
     TextView tvTitle;
     @Bind(R.id.home_back_bt)
-    TextView home_back;
+    LinearLayout home_back;
     @Bind(R.id.bind_one_Cimg)
     ImageView bind_one_Cimg;
     @Bind(R.id.bind_one_line)
@@ -234,7 +234,6 @@ public class LessonDownActivity extends BaseAppCompatActivity implements CallBac
     protected void onStart() {
         super.onStart();
 //        mediaPlayer.start();
-
     }
     public void run()
     {
@@ -376,7 +375,6 @@ public class LessonDownActivity extends BaseAppCompatActivity implements CallBac
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         if (runnable!=null) {
             handler.removeCallbacks(runnable);
         }

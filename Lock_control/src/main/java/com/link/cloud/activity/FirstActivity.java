@@ -1,6 +1,5 @@
 package com.link.cloud.activity;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,18 +15,18 @@ import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.hotelmanager.xzy.util.OpenDoorUtil;
 import com.link.cloud.BaseApplication;
 import com.link.cloud.R;
 import com.link.cloud.base.ApiException;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.Lockdata;
 import com.link.cloud.contract.IsopenCabinet;
 import com.link.cloud.core.BaseAppCompatActivity;
-import com.link.cloud.fragment.BindVeinMainFragment;
 import com.link.cloud.fragment.FirstFragment;
-import com.link.cloud.fragment.MainFragment;
 import com.link.cloud.greendao.gen.CabinetNumberDao;
 import com.link.cloud.greendao.gen.CabinetRecordDao;
 import com.link.cloud.greendao.gen.PersonDao;
@@ -172,14 +171,12 @@ public class FirstActivity extends BaseAppCompatActivity implements IsopenCabine
         microFingerVein=MicroFingerVein.getInstance(this);
         mesReceiver = new MesReceiver();
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(LockActivity.ACTION_UPDATEUI);
+
         registerReceiver(mesReceiver, intentFilter);
         head_text_02.setText("寄存物品");
         text_error.setText("请正确放置手指...");
         workService = new WorkService();
         time_forfinger.setVisibility(View.INVISIBLE);
-        setupParam();
-        time_out();
     }
 //    @Override
 //    protected void onVisible() {
@@ -325,6 +322,7 @@ public class FirstActivity extends BaseAppCompatActivity implements IsopenCabine
         mdWorkThread=new Thread(runnablemol);
         mdWorkThread.start();
     }
+
     Runnable  runnablemol=new Runnable() {
         @Override
         public void run() {
@@ -522,6 +520,12 @@ public class FirstActivity extends BaseAppCompatActivity implements IsopenCabine
             e.printStackTrace();
         }
     }
+
+    @Override
+    public void codeSuccess(Code_Message resultResponse) {
+
+    }
+
     /**
      * 广播接收器
      *
@@ -540,7 +544,7 @@ public class FirstActivity extends BaseAppCompatActivity implements IsopenCabine
     @Override
     public void onDestroy() {
         Logger.e("FirstFragment"+"OnDestroy");
-        microFingerVein.close(1);
+//        microFingerVein.close(1);
         bRun=false;
         isview=true;
         if (timer!=null) {

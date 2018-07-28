@@ -1,42 +1,28 @@
-/*
- * {EasyGank}  Copyright (C) {2015}  {CaMnter}
- *
- * This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
- * This is free software, and you are welcome to redistribute it
- * under certain conditions; type `show c' for details.
- *
- * The hypothetical commands `show w' and `show c' should show the appropriate
- * parts of the General Public License.  Of course, your program's commands
- * might be different; for a GUI interface, you would use an "about box".
- *
- * You should also get your employer (if you work as a programmer) or school,
- * if any, to sign a "copyright disclaimer" for the program, if necessary.
- * For more information on this, and how to apply and follow the GNU GPL, see
- * <http://www.gnu.org/licenses/>.
- *
- * The GNU General Public License does not permit incorporating your program
- * into proprietary programs.  If your program is a subroutine library, you
- * may consider it more useful to permit linking proprietary applications with
- * the library.  If this is what you want to do, use the GNU Lesser General
- * Public License instead of this License.  But first, please read
- * <http://www.gnu.org/philosophy/why-not-lgpl.html>.
- */
 
 package com.link.cloud;
-
+import android.Manifest;
 import android.app.Activity;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.multidex.MultiDex;
 import android.support.multidex.MultiDexApplication;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 
@@ -45,10 +31,19 @@ import com.alibaba.sdk.android.push.CloudPushService;
 import com.alibaba.sdk.android.push.CommonCallback;
 import com.alibaba.sdk.android.push.noonesdk.PushServiceFactory;
 import com.anupcowkur.reservoir.Reservoir;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.iflytek.cloud.ErrorCode;
+import com.iflytek.cloud.InitListener;
+import com.iflytek.cloud.SpeechConstant;
+import com.iflytek.cloud.SpeechSynthesizer;
+import com.iflytek.cloud.SpeechUtility;
+import com.iflytek.cloud.SynthesizerListener;
+import com.iflytek.cloud.util.ResourceUtil;
 import com.link.cloud.activity.LockActivity;
+import com.link.cloud.activity.MainActivity;
 import com.link.cloud.base.ApiException;
 import com.link.cloud.base.LogcatHelper;
 import com.link.cloud.bean.CabinetNumberData;
@@ -57,12 +52,17 @@ import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.Member;
 import com.link.cloud.bean.MessagetoJson;
+import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.PushMessage;
+import com.link.cloud.bean.Sign_data;
+import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.component.MyMessageReceiver;
 import com.link.cloud.contract.CabinetNumberContract;
 import com.link.cloud.contract.DownloadFeature;
 import com.link.cloud.contract.GetDeviceIDContract;
+import com.link.cloud.contract.SyncUserFeature;
 import com.link.cloud.contract.VersoinUpdateContract;
 //import com.link.cloud.greendao.gen.DaoMaster;
 //import com.link.cloud.greendao.gen.DaoSession;
@@ -72,13 +72,20 @@ import com.link.cloud.greendao.gen.DaoMaster;
 import com.link.cloud.greendao.gen.DaoSession;
 import com.link.cloud.greendao.gen.PersonDao;
 
+import com.link.cloud.greendao.gen.SignUserDao;
 import com.link.cloud.greendaodemo.HMROpenHelper;
 import com.link.cloud.greendaodemo.Person;
+import com.link.cloud.greendaodemo.SignUser;
 import com.link.cloud.message.CrashHandler;
+import com.link.cloud.setting.TtsSettings;
+import com.link.cloud.utils.DownloadUtils;
+import com.link.cloud.utils.FileUtils;
+import com.link.cloud.view.ProgressHUD;
 import com.orhanobut.logger.Logger;
 
 import com.link.cloud.constant.Constant;
 import com.link.cloud.utils.Utils;
+import com.tencent.bugly.crashreport.CrashReport;
 import com.umeng.analytics.MobclickAgent;
 
 import org.greenrobot.greendao.query.QueryBuilder;
@@ -92,15 +99,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.transform.Result;
 
+import md.com.sdk.MicroFingerVein;
+
+import static com.link.cloud.utils.Utils.byte2hex;
 /**
  * Description：BaseApplication
  * Created by Shaozy on 2016/8/10.
  */
-public class BaseApplication extends MultiDexApplication  implements GetDeviceIDContract.VersoinUpdate,DownloadFeature.download{
+public class BaseApplication extends MultiDexApplication  implements GetDeviceIDContract.VersoinUpdate,DownloadFeature.download,SyncUserFeature.syncUser{
     public static boolean DEBUG = false;
     private static BaseApplication ourInstance = new BaseApplication();
     public boolean log = true;
@@ -108,7 +119,6 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     public  static String messgetext;
     public Gson gson;
     private static Context context;
-    public static String deviceID;
     public static final long ONE_KB = 1024L;
     public static final long ONE_MB = ONE_KB * 1024L;
     public static final long CACHE_DATA_MAX_SIZE = ONE_MB * 3L;
@@ -127,8 +137,11 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     public static BaseApplication instances;
     private static LockActivity mainAcivity;
    static DownloadFeature feature;
+   static SyncUserFeature syncUserFeature;
     CabinetNumberContract cabinetNumberContract;
+    MicroFingerVein microFingerVein;
     MyMessageReceiver receiver;
+    SharedPreferences mSharedPreferences;
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
@@ -140,13 +153,17 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     @Override
     public void onCreate() {
         super.onCreate();
+        CrashReport.initCrashReport(getApplicationContext(), "62ab7bf668", true);
+        //        CrashHandler.getInstance().init(this);
+        //        LogcatHelper.getInstance(this).start();
         feature=new DownloadFeature();
         feature.attachView(this);
-//        CrashHandler.getInstance().init(this);
-//        LogcatHelper.getInstance(this).start();
+        syncUserFeature=new SyncUserFeature();
+        syncUserFeature.attachView(this);
         instances = this;
         ourInstance = this;
         setDatabase();
+
          context=getApplicationContext();
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override
@@ -179,6 +196,7 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         } catch (Exception e) {
             DEBUG = false;
         }
+        ifspeaking();
         this.initGson();
         this.initReservoir();
         this.initCCPRestSms();
@@ -186,15 +204,89 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         presenter.attachView(this);
         initCloudChannel(this);
         MobclickAgent.setScenarioType(this, MobclickAgent.EScenarioType.E_UM_NORMAL);
-    }
 
-    public static String getMac(){
+    }
+    /**
+     * 参数设置
+     * @return
+     */
+//    private void setParam(){
+//        // 清空参数
+//        mTts.setParameter(SpeechConstant.PARAMS, null);
+//        //设置使用本地引擎
+//        mTts.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_LOCAL);
+//        //设置发音人资源路径
+//        mTts.setParameter(ResourceUtil.TTS_RES_PATH,getResourcePath());
+//        //设置发音人
+//        mTts.setParameter(SpeechConstant.VOICE_NAME,voicerLocal);
+//        //设置合成语速
+//        mTts.setParameter(SpeechConstant.SPEED, mSharedPreferences.getString("speed_preference", "50"));
+//        //设置合成音调
+//        mTts.setParameter(SpeechConstant.PITCH, mSharedPreferences.getString("pitch_preference", "50"));
+//        //设置合成音量
+//        mTts.setParameter(SpeechConstant.VOLUME, mSharedPreferences.getString("volume_preference", "50"));
+//        //设置播放器音频流类型
+//        mTts.setParameter(SpeechConstant.STREAM_TYPE, mSharedPreferences.getString("stream_preference", "3"));
+//
+//        // 设置播放合成音频打断音乐播放，默认为true
+//        mTts.setParameter(SpeechConstant.KEY_REQUEST_FOCUS, "true");
+//        // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
+//        // 注：AUDIO_FORMAT参数语记需要更新版本才能生效
+//        mTts.setParameter(SpeechConstant.AUDIO_FORMAT, "wav");
+//        mTts.setParameter(SpeechConstant.TTS_AUDIO_PATH, Environment.getExternalStorageDirectory()+"/msc/tts.wav");
+//    }
+//    //获取发音人资源路径
+//    private String getResourcePath(){
+//        StringBuffer tempBuffer = new StringBuffer();
+//        //合成通用资源
+//        tempBuffer.append(ResourceUtil.generateResourcePath(this, ResourceUtil.RESOURCE_TYPE.assets, "tts/common.jet"));
+//        tempBuffer.append(";");
+//        //发音人资源
+//        tempBuffer.append(ResourceUtil.generateResourcePath(this, ResourceUtil.RESOURCE_TYPE.assets, "tts/"+LockActivity.voicerLocal+".jet"));
+//        return tempBuffer.toString();
+//    }
+    boolean ret=false;
+//    private void checkMD(){
+//        if (mainAcivity!=null&&ret!=true) {
+//            microFingerVein = MicroFingerVein.getInstance(mainAcivity);
+//            int devicecount=microFingerVein.fvdev_get_count();
+//            if (devicecount!=0) {
+//                ret = microFingerVein.fvdev_open();
+////               Logger.e("WorkService1"+"devicecount"+devicecount + "=====================" + ret);
+//            }
+//        }
+//    }
+    /**
+     * 初始化监听。
+     */
+    private InitListener mTtsInitListener = new InitListener() {
+        @Override
+        public void onInit(int code) {
+            Log.d(TAG, "InitListener init() code = " + code);
+            if (code != ErrorCode.SUCCESS) {
+               mainAcivity.showTip (getResources().getString(R.string.mTts_stating_error)+code);
+            } else {
+                // 初始化成功，之后可以调用startSpeaking方法
+                // 注：有的开发者在onCreate方法中创建完合成对象之后马上就调用startSpeaking进行合成，
+                // 正确的做法是将onCreate中的startSpeaking调用移至这里
+            }
+        }
+    };
+
+    void ifspeaking(){
+        StringBuffer param = new StringBuffer();
+        param.append("appid="+getString(R.string.app_id));
+        param.append(",");
+        // 设置使用v5+
+        param.append(SpeechConstant.ENGINE_MODE+"="+SpeechConstant.MODE_MSC);
+        SpeechUtility.createUtility(BaseApplication.this, param.toString());
+    }
+    public String getMac(){
         String result = "";
         String Mac = "";
         result = callCmd("busybox ifconfig","HWaddr");
-        //如果返回的result == null，则说明网络不可取
         if(result==null){
-            return "网络出错，请检查网络";
+            return getResources().getString(R.string.network_error);
         }
         //对该行数据进行解析
         //例如：eth0      Link encap:Ethernet  HWaddr 00:16:E8:3E:DF:67
@@ -244,23 +336,51 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         mDaoMaster = new DaoMaster(db);
         mDaoSession = mDaoMaster.newSession();
     }
+    @Override
+    public void downloadApK(UpDateBean resultResponse) {
+        int version = getVersion(getApplicationContext());
+        if(version<resultResponse.getData().getPackage_version()){
+            downLoadApk(resultResponse.getData().getPackage_path());
+        }
+        Logger.e(resultResponse.getMsg()+resultResponse.getData().getPackage_path());
+    }
+    private void downLoadApk(String downloadurl) {
+        // 判断当前用户是否有sd卡
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "lingxi.apk");
+            if (file.exists()) {
+                file.delete();
+            }
+            Toast.makeText(this, getResources().getString(R.string.notice_stating), Toast.LENGTH_SHORT).show();
+            DownloadUtils utils = new DownloadUtils(this);
+            utils.downloadAPK(downloadurl, "lingxi.apk");
+            Logger.e(file.getAbsolutePath());
 
+        }
+    }
+    private static int getVersion(Context context)// 获取版本号
+    {
+        try {
+            PackageInfo pi = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            return pi.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return 0;
+        }
+    }
     @Override
     public void downloadSuccess(DownLoadData resultResponse) {
-        if (resultResponse!=null) {
-            personDao = getDaoSession().getPersonDao();
-            List<Person> persons=personDao.loadAll();
-            QueryBuilder qb = personDao.queryBuilder();
-            List<Person> users = qb.where(PersonDao.Properties.Uid.eq(resultResponse.getDown_userInfo()[0].getUid())).list();
-            if (users.size() > 0) {
-            } else{
-            Person person = new Person();
-            person.setPos(persons.size()+"");
-            person.setUid(resultResponse.getDown_userInfo()[0].getUid());
-            person.setNumber(resultResponse.getDown_userInfo()[0].getUserName());
-            person.setFingermodel(resultResponse.getDown_userInfo()[0].getFeature());
-            getDaoSession().getPersonDao().insert(person);
+        PersonDao personDao=BaseApplication.getInstances().getDaoSession().getPersonDao();
+        if (resultResponse.getData().size()>0){
+            personDao.insertInTx(resultResponse.getData());
         }
+    }
+    @Override
+    public void downloadNotReceiver(DownLoadData resultResponse) {
+        PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
+        if (resultResponse.getData().size()>0){
+            personDao.insertInTx(resultResponse.getData());
         }
     }
     public DaoSession getDaoSession() {
@@ -270,14 +390,6 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     public SQLiteDatabase getDb() {
         return db;
     }
-    public void setDeviceID(String deviceID) {
-        this.deviceID = deviceID;
-    }
-
-    public String getDeviceID() {
-        return deviceID;
-    }
-
     private void initGson() {
         this.gson = new GsonBuilder().setDateFormat(Constant.BASE_DATA_FORMAT).create();
     }
@@ -371,13 +483,15 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     private void initCloudChannel(final Context applicationContext) {
         PushServiceFactory.init(applicationContext);
         final CloudPushService pushService = PushServiceFactory.getCloudPushService();
+        String id =pushService.getDeviceId();
+        Logger.e(""+id);
         pushService.register(applicationContext, new CommonCallback() {
             @Override
             public void onSuccess(String response) {
-                deviceTargetValue = Utils.getMD5(getMac());
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
+                        deviceTargetValue = Utils.getMD5(getMac());
                         presenter.getDeviceID(deviceTargetValue,2);
                     }
                 }).start();
@@ -390,28 +504,166 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     }
     @Override
     public void onResultError(ApiException e) {
+        onError(e);
     }
     @Override
     public void onError(ApiException e) {
+        if (downLoadListner!=null) {
+            downLoadListner.finish();
+        }
     }
     @Override
     public void onPermissionError(ApiException e) {
+        onError(e);
     }
-    class ResultData<T>{
-        T data;
-        String msg;
+    @Override
+    public void syncUserSuccess(DownLoadData resultResponse) {
+        personDao=BaseApplication.getInstances().getDaoSession().getPersonDao();
+        if (resultResponse.getData().size()>0){
+            personDao.deleteAll();
+            personDao.insertInTx(resultResponse.getData());
+        }
+        List<Person>personList=personDao.loadAll();
+        Logger.e(getResources().getString(R.string.syn_data)+personList.size());
+//        TTSUtils.getInstance().speak("初始化成功");
+        NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+        if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+            feature.appUpdateInfo(FileUtils.loadDataFromFile(getContext(), "deviceId.text"));
+        }else {
+            Toast.makeText(getContext(), getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
+        }
+        if(downLoadListner!=null){
+            downLoadListner.finish();
+        }
     }
+    ArrayList<Person> SyncFeaturesPages = new ArrayList<>();
+    int totalPage=0,currentPage=0,downloadPage=0;
+    @Override
+    public void getPagesInfo(PagesInfoBean resultResponse) {
+        if (resultResponse.getData().getCount()>0) {
+            totalPage = resultResponse.getData().getPageCount();
+            for (int x = 0; x < 8; x++) {
+                if (x > totalPage - 1) {
+                    return;
+                }
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        currentPage++;
+                        Logger.e(currentPage + "currentPage");
+                        feature.syncUserFeaturePages(FileUtils.loadDataFromFile(getContext(), "deviceId.text"), currentPage);
+                    }
+                }).start();
+            }
+        }else {
+            if (downLoadListner != null) {
+                downLoadListner.finish();
+            }
+        }
+    }
+
+    @Override
+    public void syncUserFeaturePagesSuccess(SyncFeaturesPage resultResponse) {
+        if (resultResponse.getData().size()>0) {
+            downloadPage++;
+            Logger.e(downloadPage + "downloadPage");
+            if (totalPage > 8 && currentPage < totalPage) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        currentPage++;
+                        Logger.e(currentPage + "currentPage");
+                        feature.syncUserFeaturePages(FileUtils.loadDataFromFile(getContext(), "deviceId.text"), currentPage);
+                    }
+                }).start();
+            }
+            SyncFeaturesPages.addAll(resultResponse.getData());
+            if (downloadPage == totalPage) {
+                PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
+                personDao.insertInTx(resultResponse.getData());
+                Logger.e(SyncFeaturesPages.size() + getResources().getString(R.string.syn_data));
+                NetworkInfo info = connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+                if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+                    feature.appUpdateInfo(FileUtils.loadDataFromFile(getContext(), "deviceId.text"));
+                } else {
+                    Toast.makeText(getContext(), getResources().getString(R.string.syn_data), Toast.LENGTH_LONG).show();
+                }
+                if (downLoadListner != null) {
+                    downLoadListner.finish();
+                }
+            }
+        }else {
+            if (downLoadListner != null) {
+                downLoadListner.finish();
+            }
+        }
+    }
+    Handler handler = new Handler(){
         @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            Logger.e("downloadNotReceiver>>>>>>>>>>>>>>>>>>>>>>>>");
+            handler.removeCallbacksAndMessages(null);
+            String s = FileUtils.loadDataFromFile(getContext(), "deviceId.text");
+            connectivityManager =(ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+            NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+            if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+                    feature.downloadNotReceiver(s);
+            }else {
+                Toast.makeText(getContext(), getResources().getString(R.string.syn_data), Toast.LENGTH_LONG).show();
+            }
+            handler.sendEmptyMessageDelayed(0,30*1000);
+        }
+    };
+    public downloafinish downLoadListner;
+    public void setDownLoadListner(downloafinish downLoadListner){
+        this.downLoadListner=downLoadListner;
+   }
+
+    @Override
+    public void syncSignUserSuccess(Sign_data downLoadData) {
+        SignUserDao signUserDao=BaseApplication.getInstances().getDaoSession().getSignUserDao();
+        if (downLoadData.getData().size()>0){
+            signUserDao.deleteAll();
+            signUserDao.insertInTx(downLoadData.getData());
+        }
+    }
+ConnectivityManager connectivityManager;
+    @Override
     public void getDeviceSuccess(DeviceData deviceData) {
        Logger.e("BaseApplication+devicedate"+deviceData.getDeviceData().getDeviceId()+"numberType"+deviceData.getDeviceData().getNumberType());
-            SharedPreferences userInfo = getSharedPreferences("user_info",0);
-            userInfo.edit().putString("deviceId", deviceData.getDeviceData().getDeviceId()).commit();
-            userInfo.edit().putInt("numberType",deviceData.getDeviceData().getNumberType()).commit();
+            SharedPreferences userInfo = getSharedPreferences("user_info",MODE_MULTI_PROCESS);
+            SharedPreferences.Editor editor=userInfo.edit();
+            editor.putString("deviceId", deviceData.getDeviceData().getDeviceId());
+            editor.putInt("numberType",deviceData.getDeviceData().getNumberType());
+            editor.commit();
+            if (!"".equals(deviceData.getDeviceData().getDeviceId())) {
+                FileUtils.saveDataToFile(getContext(), deviceData.getDeviceData().getDeviceId(), "deviceId.text");
+            }
             final CloudPushService pushService = PushServiceFactory.getCloudPushService();
             pushService.bindAccount(deviceData.getDeviceData().getDeviceId(), new CommonCallback() {
                 @Override
                 public void onSuccess(String s) {
+                    connectivityManager =(ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+                    NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+                    if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+                    String  deviceID= FileUtils.loadDataFromFile(getContext(),"deviceId.text");
+                    if (downLoadListner!=null) {
+                        downLoadListner.start();
+                    }
+                    PersonDao personDao=BaseApplication.getInstances().getDaoSession().getPersonDao();
+                    List<Person> list=personDao.loadAll();
+                    if (list.size()==0) {
+                        syncUserFeature.syncSign(deviceID);
+                        feature.getPagesInfo(deviceID);
+                        handler.sendEmptyMessageDelayed(0,1000);
+                        //                        syncUserFeature.syncUser(deviceID);
+                    }else {
+                    }
                     Logger.e(TAG + "init cloudchannel bindAccount" +"deviceTargetValue:" + deviceData.getDeviceData().getDeviceId());
+                    }else {
+                        Toast.makeText(getContext(), getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
+                    }
                 }
                 @Override
                 public void onFailed(String s, String s1) {
@@ -425,17 +677,19 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     public static void setConsoleText(String text) {
         Logger.e("BaseApplication setConsoleText===================="+text);
         pushMessage=toJsonArray(text);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                feature.download(pushMessage.getMessageId(),pushMessage.getAppid(),pushMessage.getShopId(),deviceID,pushMessage.getUid());
-            }
-        }).start();
+        String deviceId=FileUtils.loadDataFromFile(getContext(),"deviceId.text");
+        if ("1".equals(pushMessage.getType())) {
+            feature.download(pushMessage.getMessageId(), pushMessage.getAppid(), pushMessage.getShopId(), FileUtils.loadDataFromFile(getContext(), "deviceId.text"), pushMessage.getUid());
+        } else if ("9".equals(pushMessage.getType())) {
+            String sql="INSERT INTO SIGN_USER (USER_ID) VALUES (\""+pushMessage.getUid()+"\"\n"+")";
+            BaseApplication.getInstances().getDaoSession().getDatabase().execSQL(sql);
+        }
     }
     public static PushMessage toJsonArray(String json) {
         try {
             pushMessage = new PushMessage();
             JSONObject object=new JSONObject(json);
+            pushMessage.setType(object.getString("type"));
             pushMessage.setAppid(object.getString("appid"));
             pushMessage.setShopId(object.getString("shopId"));
             pushMessage.setUid(object.getString("uid"));
@@ -446,4 +700,9 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         }
         return pushMessage;
     }
+    public interface downloafinish{
+        void finish();
+        void start();
+    }
+
 }

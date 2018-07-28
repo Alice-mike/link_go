@@ -22,7 +22,7 @@
                     android:layout_weight="1"
                     android:visibility="visible"
                     android:gravity="center_vertical"
-                    android:text="返回"
+                    android:text="@string/back"
                     android:textSize="35sp"
                     android:textStyle="bold"
                     android:textColor="#ffffff"/>

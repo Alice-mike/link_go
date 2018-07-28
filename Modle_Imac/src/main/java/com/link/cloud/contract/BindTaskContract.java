@@ -38,8 +38,8 @@ public class BindTaskContract extends BasePresenter<BindTaskContract.BindView> {
 //        mediaPlayer1=MediaPlayer.create(TestActivityManager.getInstance().getCurrentActivity(), R.raw.putfinger_again);
 
     }
-    public void bindVeinMemeber( String deviceId,int userType,int numberType, String numberValue, String feature) {
-        this.mCompositeSubscription.add(this.mDataManager.bindVeinMemeber(deviceId,userType,numberType,numberValue,feature)
+    public void bindVeinMemeber( String deviceId,int userType,int numberType, String numberValue,String img1,String img2,String img3, String feature) {
+        this.mCompositeSubscription.add(this.mDataManager.bindVeinMemeber(deviceId,userType,numberType,numberValue,img1,img2,img3,feature)
                 .subscribe(new AbsAPICallback<Member>() {
                     @Override
                     public void onCompleted() {

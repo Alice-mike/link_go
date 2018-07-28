@@ -122,7 +122,6 @@ public class EliminateLessonMainFragment extends BaseFragment {
     }
     public class SectionsPagerAdapter extends FragmentStatePagerAdapter{
         public SectionsPagerAdapter (FragmentManager fm){super(fm);}
-
         @Override
         public Fragment getItem(int position) {
             if (fragments!=null)

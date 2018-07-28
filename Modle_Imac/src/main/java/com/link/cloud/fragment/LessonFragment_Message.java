@@ -26,7 +26,7 @@ import butterknife.OnClick;
  * Created by Administrator on 2017/8/3.
  */
 public class LessonFragment_Message extends BaseFragment{
-
+//
 //    @Bind(R.id.lesson_menber_img)
 //    ImageView menber_img;
 //    @Bind(R.id.lesson_coach_img)

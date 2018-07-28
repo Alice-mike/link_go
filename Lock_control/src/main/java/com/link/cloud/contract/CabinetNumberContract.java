@@ -14,7 +14,6 @@ import com.orhanobut.logger.Logger;
  */
 
 public class CabinetNumberContract extends BasePresenter<CabinetNumberContract.cabinetNumber> {
-
     public interface cabinetNumber extends MvpView {
         void cabinetNumberSuccess(CabinetNumberData cabinetNumberData);
     }

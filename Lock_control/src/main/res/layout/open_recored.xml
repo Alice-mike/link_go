@@ -12,7 +12,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="姓名"
+            android:text="@string/name"
             android:textColor="@color/black"
             android:textSize="@dimen/text_size_20sp"
             android:gravity="center"
@@ -21,14 +21,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="@dimen/text_size_20sp"
-            android:text="号码"
+            android:text="@string/number"
             android:textColor="@color/black"
             android:gravity="center"
             android:layout_weight="9" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="柜号"
+            android:text="@string/cabinet_num"
             android:textSize="@dimen/text_size_20sp"
             android:textColor="@color/black"
             android:gravity="center"
@@ -36,13 +36,13 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="开柜方式"
+            android:text="@string/open_name"
             android:textColor="@color/black"
             android:textSize="@dimen/text_size_20sp"
             android:gravity="center"
             android:layout_weight="3" />
         <TextView
-            android:text="打开时间"
+            android:text="@string/open_time"
             android:textColor="@color/black"
             android:gravity="center"
             android:textSize="@dimen/text_size_20sp"

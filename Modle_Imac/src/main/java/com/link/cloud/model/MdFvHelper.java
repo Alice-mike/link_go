@@ -1,6 +1,7 @@
-package com.md.rec;
+package com.link.cloud.model;
 
 import android.util.Log;
+
 import md.com.sdk.MicroFingerVein;
 
 /**
@@ -13,8 +14,8 @@ public class MdFvHelper {
     /**
      *  连续尝试抓取最多tryTimes张图，首次遇到得分大于指定倍数质量评估阈值的优质图时立即返回；</BR>
      */
-    public static byte[] tryGetFirstBestImg(MicroFingerVein microFingerVein,int deviceIndex,final int tryTimes){
-        long startTimeMillis=System.currentTimeMillis();
+    public static byte[] tryGetFirstBestImg(MicroFingerVein microFingerVein, int deviceIndex, final int tryTimes){
+        long startTimeMillis= System.currentTimeMillis();
         float decentScore=microFingerVein.fEnergyThreshold*1.5f;//大于此值认为是质评优质图；
         int i;
         byte[] img=null;

@@ -14,10 +14,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.link.cloud.R;
 import com.link.cloud.BaseApplication;
-
-
+import com.link.cloud.R;
 import com.link.cloud.utils.Utils;
 
 import java.util.HashMap;
@@ -42,12 +40,11 @@ public class ProgressHUD extends Dialog implements Runnable {
         getWindow().setBackgroundDrawable(new ColorDrawable(getContext().getResources().getColor(android.R.color.transparent)));
         getWindow().setGravity(Gravity.CENTER);
         getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
-
-//        View rootView = getLayoutInflater().inflate(R.layout.dialog_hud, null);
-//        setContentView(rootView);
-//        progress = (ProgressBar) findViewById(R.id.DialogHud_Progress);
-//        iconImg = (ImageView) findViewById(R.id.DialogHud_Icon);
-//        message = (TextView) findViewById(R.id.message);
+        View rootView = getLayoutInflater().inflate(R.layout.dialog_hud, null);
+        setContentView(rootView);
+        progress = (ProgressBar) findViewById(R.id.DialogHud_Progress);
+        iconImg = (ImageView) findViewById(R.id.DialogHud_Icon);
+        message = (TextView) findViewById(R.id.message);
     }
 
     private static synchronized HashMap<String, ProgressHUD> getDialogMap() {
@@ -144,8 +141,8 @@ public class ProgressHUD extends Dialog implements Runnable {
             }
             hud.progress.setVisibility(View.VISIBLE);
             hud.message.setVisibility(View.VISIBLE);
-            hud.iconImg.setVisibility(View.GONE);
-            hud.show();
+//            hud.iconImg.setVisibility(View.GONE);
+//            hud.show();
         }
     }
 
@@ -189,8 +186,8 @@ public class ProgressHUD extends Dialog implements Runnable {
             }
             hud.progress.setVisibility(View.GONE);
             hud.iconImg.setVisibility(View.VISIBLE);
-//            hud.iconImg.setImageResource(success ? R.drawable.icon_success
-//                    : R.drawable.icon_failure);
+            hud.iconImg.setImageResource(success ? R.drawable.icon_success
+                    : R.drawable.icon_failure);
             hud.listener = listener;
             hud.show();
             getHandler().postDelayed(hud, DISMISS_DELAY);

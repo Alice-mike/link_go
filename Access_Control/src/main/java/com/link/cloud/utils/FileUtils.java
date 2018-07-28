@@ -1,13 +1,8 @@
 package com.link.cloud.utils;
 import android.content.Context;
-import android.os.Environment;
-import android.util.Log;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -16,12 +11,13 @@ import java.io.OutputStreamWriter;
 /**
  * Created by 30541 on 2018/6/28.
  */
+
 /**
  * Created by 邹奇 on 2017/7/18.
  * 文件工具类
  */
 
-public class FileUtils  {
+public class FileUtils {
 
     @Override
     public int hashCode() {

@@ -50,10 +50,11 @@ public class Constant {
     public static final int ACTION_CONSUME = 0x0003;
     public static final int ACTION_Eliminate = 0x0003;
     public static final String HOME_PAGE_URL = "http://www.soonvein.com/";
-//    public static String REST_API_URL = "http://biocloud.wedonetech.com/vein-api/";
+    //    public static String REST_API_URL = "http://biocloud.wedonetech.com/vein-api/";
     //http://120.24.169.32:8082/vein-api/
     //http://39.108.13.171:8082/vein-api/
-//public static String REST_API_URL = "http://c.rocketbird.cn/vein-api/";
-    public static String REST_API_URL = "http://39.108.100.128:8082/api/";
+    //public static String REST_API_URL = "http://c.rocketbird.cn/vein-api/";
+//    public static String REST_API_URL = "http://39.108.100.128:8085/api/";
+        public static String REST_API_URL = "http://39.108.100.128:8082/api/";
     public static final String BASE_DATA_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 }

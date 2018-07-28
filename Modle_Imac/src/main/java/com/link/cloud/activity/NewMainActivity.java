@@ -14,46 +14,51 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.media.MediaPlayer;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.OvershootInterpolator;
-import android.view.inputmethod.InputMethodManager;
+import android.webkit.DownloadListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.anupcowkur.reservoir.Reservoir;
 import com.link.cloud.BaseApplication;
 import com.link.cloud.R;
 
 import com.link.cloud.base.ApiException;
 import com.link.cloud.bean.DownLoadData;
+import com.link.cloud.bean.PagesInfoBean;
+import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.UpDateBean;
+import com.link.cloud.contract.DownloadFeature;
 import com.link.cloud.contract.SyncUserFeature;
 import com.link.cloud.greendao.gen.PersonDao;
 import com.link.cloud.greendaodemo.Person;
 
+import com.link.cloud.utils.APKVersionCodeUtils;
+import com.link.cloud.utils.FileUtils;
+import com.link.cloud.view.ExitAlertDialogshow;
 import com.orhanobut.logger.Logger;
 
-import com.link.cloud.constant.Constant;
 import com.link.cloud.utils.CleanMessageUtil;
-import com.link.cloud.utils.ToastUtils;
 import com.link.cloud.utils.Utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.DataOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +72,7 @@ import md.com.sdk.MicroFingerVein;
  * Created by Administrator on 2017/8/18.
  */
 
-public class NewMainActivity extends AppCompatActivity implements SyncUserFeature.syncUser{
+public class NewMainActivity extends AppCompatActivity implements DownloadFeature.download{
     @Bind(R.id.fabExit)
     FloatingActionButton fabExit;
     @Bind(R.id.layout_title)
@@ -96,12 +101,12 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
     private static String ACTION_USB_PERMISSION = "com.android.USB_PERMISSION";
     private MediaPlayer mediaPlayer,mediaPlayer1,mediaPlayer2,mediaPlayer3;
     private MesReceiver mesReceiver;
-    MicroFingerVein microFingerVein;
     private String deviceID;
-    public static final String ACTION_UPDATEUI = "action.updateTiem";
-    public static final String ACTION_DATABASES = "action.databases";
+    public static final String ACTION_UPDATEUI = "com.link.cloud.updateTiem";
+    public static final String ACTION_DATABASES = "com.link.cloud.databases";
     ObjectAnimator rotationAnimator,translateAnimatorIn, translateAnimatorOut;
     OvershootInterpolator interpolator;
+    ExitAlertDialogshow exitAlertDialogshow;;
     ExitAlertDialog exitAlertDialog;
     private PersonDao personDao;
     private List<Person> userList2 = new ArrayList<Person>();
@@ -117,17 +122,28 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
     float[] score = new float[1];
     int run_type = 2;
     WorkService workService;
-    SyncUserFeature syncUserFeature;
+
+    DownloadFeature downloadFeature;
+    public MicroFingerVein microFingerVein;
 //    WorkService.MyBinder myBinder=null;
 //    NewMainActivity activity = null;
+    BaseApplication baseApplication;
     WorkService service;
     protected void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
+        CleanMessageUtil.clearAllCache(getApplicationContext());
         setContentView(R.layout.layout_main_activity);
         ButterKnife.bind(this);
-
+//            intent = new Intent(this, WorkService.class);
+//            startService(intent);
+        baseApplication=(BaseApplication)getApplication();
+        exitAlertDialogshow=new ExitAlertDialogshow(this);
+        exitAlertDialogshow.setCanceledOnTouchOutside(false);
+        exitAlertDialogshow.setCancelable(false);
+        WorkService.setActactivity(this);
+        Logger.e("NewMainActivity"+"=======================");
 //        Permition.verifyStoragePermissions(this);//检验外部存储器访问权限
         inview();
         init();
@@ -145,22 +161,22 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
         }catch (Exception e){
             return false;
         }finally {
-            {
                 try{
                     if (os!=null){
                         os.close();
                     }
                     process.destroy();
                 }catch (Exception e){
-
                 }
-            }
             return true;
         }
     }
+    ConnectivityManager connectivityManager;
     private void inview() {
-        syncUserFeature=new SyncUserFeature();
-        syncUserFeature.attachView(this);
+        TextView textView=(TextView) findViewById(R.id.versionName);
+        textView.setText( APKVersionCodeUtils.getVerName(this));
+        downloadFeature=new DownloadFeature();
+        downloadFeature.attachView(this);
         exitAlertDialog = new ExitAlertDialog(NewMainActivity.this);
         interpolator = new OvershootInterpolator();
         rotationAnimator = ObjectAnimator.ofFloat(fabExit, "rotation", 0, 360 * 2);
@@ -170,9 +186,16 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
         tv_time.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                SharedPreferences sharedPreferences=getSharedPreferences("user_info",0);
-                String deviceId=sharedPreferences.getString("deviceId","");
-                syncUserFeature.syncUser(deviceId);
+                connectivityManager =(ConnectivityManager)NewMainActivity.this.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+                NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+                if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+                    exitAlertDialogshow.show();
+                    SharedPreferences sharedPreferences = getSharedPreferences("user_info", 0);
+                    String deviceId = sharedPreferences.getString("deviceId", "");
+                    downloadFeature.getPagesInfo(deviceId);
+                }else {
+                    Toast.makeText(NewMainActivity.this,"网络已断开，请检查网络",Toast.LENGTH_LONG).show();
+                }
                 return false;
             }
         });
@@ -180,33 +203,41 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
     NewMainActivity activity;
     private void init() {
         utils=new Utils();
-        microFingerVein=MicroFingerVein.getInstance(this);
         mesReceiver = new MesReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_UPDATEUI);
         registerReceiver(mesReceiver, intentFilter);
-        intent = new Intent(this, WorkService.class);
-        startService(intent);
-        WorkService.setActactivity(this);
     }
     @OnClick({R.id.bt_main_bind,R.id.bt_main_sign,R.id.bt_main_pay,R.id.bt_main_up,R.id.bt_main_down,R.id.fabExit})
     public void OnClick(View view){
+        connectivityManager =(ConnectivityManager)NewMainActivity.this.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
+        NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
         switch (view.getId()){
             case R.id.bt_main_bind:
-                intent = new Intent();
-                intent.setClass(NewMainActivity.this,BindAcitvity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                overridePendingTransition(R.anim.in_from_right,R.anim.out_to_left);
-                finish();
+                if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+                    if (Utils.isFastClick()) {
+                        intent = new Intent();
+                        intent.setClass(NewMainActivity.this, BindAcitvity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
+                    }
+                }else {
+                    Toast.makeText(NewMainActivity.this,"网络已断开，请检查网络",Toast.LENGTH_LONG).show();
+                }
             break;
             case R.id.bt_main_sign:
-                intent = new Intent();
-                intent.setClass(NewMainActivity.this,SigeActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                overridePendingTransition(R.anim.in_from_right,R.anim.out_to_left);
-                finish();
+                if (info!=null) {
+                    if (Utils.isFastClick()) {
+                        intent = new Intent();
+                        intent.setClass(NewMainActivity.this, SigeActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
+                    }
+                }else {
+                    Toast.makeText(NewMainActivity.this,"网络已断开，请检查网络",Toast.LENGTH_LONG).show();
+                }
                 break;
 //            case R.id.bt_main_up:
 //                intent = new Intent();
@@ -251,20 +282,14 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
                     fabExit.setVisibility(View.VISIBLE);
                     rotationAnimator.start();
                 }
-
                 @Override
                 public void onAnimationEnd(Animator animation) {
-
                 }
-
                 @Override
                 public void onAnimationCancel(Animator animation) {
-
                 }
-
                 @Override
                 public void onAnimationRepeat(Animator animation) {
-
                 }
             });
         }
@@ -289,12 +314,9 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
                 public void onAnimationEnd(Animator animation) {
                     fabExit.setVisibility(View.GONE);
                 }
-
                 @Override
                 public void onAnimationCancel(Animator animation) {
-
                 }
-
                 @Override
                 public void onAnimationRepeat(Animator animation) {
 
@@ -326,7 +348,7 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
                 case MicroFingerVein.USB_CONNECT_SUCESS: {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         UsbDevice  usbDevice=(UsbDevice) msg.obj;
-                            Logger.e(usbDevice.getManufacturerName()+"  节点："+usbDevice.getDeviceName());
+//                            Logger.e(usbDevice.getManufacturerName()+"  节点："+usbDevice.getDeviceName());
                     }
                 }
                 break;
@@ -398,24 +420,66 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
     @Override
     public void onResultError(ApiException e) {
     }
-    @Override
-    public void syncUserSuccess(DownLoadData resultResponse) {
-        if (resultResponse.getDown_userInfo().length>0){
-            personDao= BaseApplication.getInstances().getDaoSession().getPersonDao();
-            personDao.deleteAll();
-            Person person=new Person();
-            for (int i=0;i<resultResponse.getDown_userInfo().length;i++){
-                person.setId((long) (i+1));
-                person.setPos(i+"");
-                person.setUid(resultResponse.getDown_userInfo()[i].getUid());
-                person.setNumber(resultResponse.getDown_userInfo()[i].getUserName());
-                person.setFingermodel(resultResponse.getDown_userInfo()[i].getFeature());
-                personDao.insert(person);
 
+    @Override
+    public void downloadNotReceiver(DownLoadData resultResponse) {
+    }
+
+    @Override
+    public void downloadSuccess(DownLoadData resultResponse) {
+    }
+    @Override
+    public void downloadApK(UpDateBean resultResponse) {
+    }
+
+    ArrayList<Person> SyncFeaturesPages = new ArrayList<>();
+    int totalPage=0,currentPage=0,downloadPage=0;
+    @Override
+    public void getPagesInfo(PagesInfoBean resultResponse) {
+        totalPage=resultResponse.getData().getPageCount();
+        for(int x=0;x<8;x++){
+            if(x>totalPage-1){
+                return;
             }
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    currentPage++;
+                    Logger.e(currentPage+"currentPage");
+                    downloadFeature.syncUserFeaturePages(FileUtils.loadDataFromFile(NewMainActivity.this, "deviceId.text"),currentPage);
+                }
+            }).start();
         }
     }
 
+    @Override
+    public void syncUserFeaturePagesSuccess(SyncFeaturesPage resultResponse) {
+        downloadPage++;
+        Logger.e(downloadPage+"downloadPage");
+        if(totalPage>8&&currentPage<totalPage){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    currentPage++;
+                    Logger.e(currentPage+"currentPage");
+                    downloadFeature.syncUserFeaturePages(FileUtils.loadDataFromFile(NewMainActivity.this, "deviceId.text"),currentPage);
+                }
+            }).start();
+        }
+        SyncFeaturesPages.addAll(resultResponse.getData());
+        if(downloadPage==totalPage){
+            PersonDao personDao=BaseApplication.getInstances().getDaoSession().getPersonDao();
+            personDao.insertInTx(resultResponse.getData());
+            Logger.e(SyncFeaturesPages.size()+"数据同步完成");
+            NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
+            if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
+                downloadFeature.appUpdateInfo(FileUtils.loadDataFromFile(NewMainActivity.this, "deviceId.text"));
+            }else {
+                Toast.makeText(NewMainActivity.this, "网络已断开，请查看网络", Toast.LENGTH_LONG).show();
+            }
+            exitAlertDialogshow.dismiss();
+        }
+    }
     private class ExitAlertDialog extends Dialog  {
         private Context mContext;
         TextView texttitle;
@@ -438,63 +502,12 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
             texttitle=(TextView)view.findViewById(R.id.text_title);
             SharedPreferences sharedPreference=getSharedPreferences("user_info",0);
             texttitle.setText("设备ID:"+sharedPreference.getString("deviceId",""));
-//            btCancel = (Button) view.findViewById(R.id.btCancel);
-//            btConfirm = (Button) view.findViewById(R.id.btConfirm);
-//            etPwd = (EditText) view.findViewById(R.id.deviceCode);
-//            btCancel.setOnClickListener(this);
-//            btConfirm.setOnClickListener(this);
-//            this.setOnDismissListener(dialog -> {
-//                InputMethodManager mInputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-//                mInputMethodManager.hideSoftInputFromWindow(etPwd.getWindowToken(), 0);
-//                exitButtonOut();
-//            });
         }
-
         @Override
         public void show() {
-//            etPwd.setText("");
             super.show();
         }
-//        @Override
-//        public void onClick(View v) {
-//            switch (v.getId()) {
-//                case R.id.btCancel:
-//                    this.dismiss();
-//                    break;
-//                case R.id.btConfirm:
-//                    String pwd = etPwd.getText().toString().trim();
-//                    if (Utils.isEmpty(pwd)) {
-//                        ToastUtils.show(mContext, "请输入密码", ToastUtils.LENGTH_SHORT);
-//                        return;
-//                    }
-//                    String repwd;
-//                    try {
-//                        repwd = Reservoir.get(Constant.KEY_PASSWORD, String.class);
-//                    } catch (Exception e) {
-//                        repwd = "888888";
-//                    }
-//                    if (!pwd.equals(repwd)) {
-//                        ToastUtils.show(mContext, "密码不正确", ToastUtils.LENGTH_SHORT);
-////                        mediaPlayer1.start();
-//                        return;
-//                    }
-//                    try {
-////                        Reservoir.delete(Constant.KEY_DEVICE_ID);
-//                    } catch (Exception e) {
-//                    }
-//                    userInfo = NewMainActivity.this.getSharedPreferences("user_info", 0);
-//                    deviceID = userInfo.getString("DeviceID", "");
-//                    intent =new Intent();
-//                    Logger.e("NewMainActivity===="+utils.getCurrentDeviceID());
-////                    intent.setClass(NewMainActivity.this,LoginActivity.class);
-//                    intent.putExtra("mdeviceID",deviceID);
-//                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                    startActivity(intent);
-//                    this.dismiss();
-//                    finish();
-//                    break;
-//            }
-//        }
+
     }
     @Override
     public void onBackPressed() {
@@ -527,8 +540,11 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
 
     @Override
     protected void onDestroy() {
-        WorkService.microFingerVein.close();
         super.onDestroy();
+        WorkService.microFingerVein.close();
+        CleanMessageUtil.clearAllCache(getApplicationContext());
+//        Intent intent=new Intent(NewMainActivity.this,WorkService.class);
+//        stopService(intent);
         unregisterReceiver(mesReceiver);//释放广播接收者
     }
     Intent intent;
@@ -550,9 +566,7 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
                         dialog.dismiss();
-                        finish();
                         break;
-
                     case 1:
                          intent=new Intent();
                         intent.setClass(NewMainActivity.this,EliminateActivity.class);
@@ -560,7 +574,6 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
                         dialog.dismiss();
-                        finish();
                         break;
 
                     case 2:
@@ -570,7 +583,7 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
                         dialog.dismiss();
-                        finish();
+
                         break;
 
                 }
@@ -607,7 +620,6 @@ public class NewMainActivity extends AppCompatActivity implements SyncUserFeatur
             timeText.setText(intent.getStringExtra("timeStr"));
             data_time.setText(intent.getStringExtra("timeData"));
             if (context == null) {
-            context.unregisterReceiver(this);
             }
         }
     }

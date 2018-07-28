@@ -33,6 +33,7 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 >
+
                 <com.link.cloud.ui.RollListView
                     android:id="@+id/lessonmessageInfo"
                     android:layout_width="730px"

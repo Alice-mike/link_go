@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="确定退出？"
+            android:text="@string/sure_exite"
             android:textColor="@color/white"
             android:layout_marginTop="20dp"
             android:layout_marginBottom="20dp"
@@ -29,6 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:id="@+id/edit_layout"
             android:gravity="center_horizontal"
             android:orientation="horizontal">
 
@@ -37,7 +38,7 @@
                 style="@style/edittext_normal"
                 android:layout_width="@dimen/dialog_exit_edit_view_width"
                 android:layout_height="wrap_content"
-                android:hint="请输入密码"
+                android:hint="@string/put_pwd"
                 android:maxLength="6"
                 android:inputType="textPassword"
                 android:textColor="@color/white"
@@ -50,6 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:id="@+id/button_layout"
             android:layout_marginTop="20dp"
             android:layout_marginBottom="10dp"
             android:orientation="horizontal">

@@ -13,16 +13,13 @@ import com.link.cloud.utils.ReservoirUtils;
  */
 
 public class VersoinUpdateContract extends BasePresenter<VersoinUpdateContract.VersoinUpdate> {
-
     public interface VersoinUpdate extends MvpView {
-        void updateVersoin(UpdateMessage updateMessage);
+    void updateVersoin(UpdateMessage updateMessage);
     }
     public ReservoirUtils reservoirUtils;
-
     public VersoinUpdateContract() {
         this.reservoirUtils = new ReservoirUtils();
     }
-
     public void deviceUpgrade(String deviceID){
         this.mCompositeSubscription.add(this.mDataManager.deviceUpgrade(deviceID)
                 .subscribe(new AbsAPICallback<UpdateMessage>() {
@@ -34,13 +31,11 @@ public class VersoinUpdateContract extends BasePresenter<VersoinUpdateContract.V
                     @Override
                     protected void onError(ApiException e) {
                         Logger.e("VersoinUpdateContract onError"+e.getMessage());
-
                         VersoinUpdateContract.this.getMvpView().onError(e);
                     }
                     @Override
                     protected void onPermissionError(ApiException e) {
                         Logger.e("VersoinUpdateContract onPermissionError"+e.getMessage());
-
                         VersoinUpdateContract.this.getMvpView().onPermissionError(e);
                     }
                     @Override

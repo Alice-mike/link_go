@@ -8,7 +8,7 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
-        <com.link.cloud.view.NoScrollViewPager
+        <com.link.cloud.view.LazyViewPager
             android:id="@+id/bing_main_page"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -104,67 +104,48 @@
     </LinearLayout>
     </LinearLayout>
     <!--<LinearLayout-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="80px"-->
-    <!--android:layout_gravity="center"-->
-        <!--android:layout_marginTop="50px"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/layout_two"-->
+        <!--android:layout_gravity="center"-->
+        <!--android:visibility="gone"-->
         <!--android:gravity="center"-->
-    <!--android:orientation="vertical">-->
-    <!--<EditText-->
-    <!--android:id="@+id/edit_Text"-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="10px"-->
-    <!--android:text="1px"-->
-    <!--/>-->
-    <!--<Button-->
-    <!--android:id="@+id/button_code"-->
-    <!--android:layout_width="60px"-->
-    <!--android:layout_height="60px"-->
-    <!--android:text="二维码"/>-->
+        <!--android:orientation="vertical">-->
+        <!--<LinearLayout-->
+        <!--android:id="@+id/layout_error_text"-->
+        <!--android:layout_width="700px"-->
+        <!--android:layout_height="180px"-->
+        <!--android:layout_gravity="center"-->
+        <!--android:gravity="center"-->
+        <!--android:background="@drawable/main_botton"-->
+        <!--android:orientation="vertical">-->
+        <!--<TextView-->
+            <!--android:id="@+id/main_text_error"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="请按图提示操作"-->
+            <!--android:gravity="center"-->
+            <!--android:textStyle="bold"-->
+            <!--android:textColor="@color/white"-->
+            <!--android:textSize="30px"/>-->
+    <!--</LinearLayout>-->
+        <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="200px"-->
+            <!--android:visibility="visible"-->
+            <!--android:orientation="vertical">-->
+            <!--<ImageView-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:src="@drawable/putfinger"/>-->
+        <!--</LinearLayout>-->
+
     <!--</LinearLayout>-->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/layout_two"
         android:layout_gravity="center"
-        android:visibility="gone"
-        android:gravity="center"
-        android:orientation="vertical">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="200px"
-            android:visibility="visible"
-            android:orientation="vertical">
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/putfinger"/>
-        </LinearLayout>
-        <LinearLayout
-            android:id="@+id/layout_error_text"
-            android:layout_width="700px"
-            android:layout_height="180px"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:background="@drawable/main_botton"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/text_error"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="请按图提示操作"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:textColor="@color/white"
-                android:textSize="30px"/>
-        </LinearLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:id="@+id/layout_three"
+        android:id="@+id/layout_three_main"
         android:visibility="gone"
         android:background="@drawable/main_bg"
         android:gravity="center"

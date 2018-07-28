@@ -1,20 +1,18 @@
 package com.link.cloud.model;
 
-import com.google.gson.JsonObject;
-import com.link.cloud.bean.CodeInfo;
+import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
-import com.link.cloud.bean.MessagetoJson;
+import com.link.cloud.bean.PagesInfoBean;
+import com.link.cloud.bean.ResultHeartBeat;
 import com.link.cloud.bean.RetrunLessons;
 import com.link.cloud.bean.SignUserdata;
+import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
-import com.link.cloud.bean.UserResponse;
-import com.link.cloud.bean.LessonResponse;
 import com.link.cloud.bean.Member;
 import com.link.cloud.bean.RestResponse;
 import com.link.cloud.bean.ReturnBean;
-import com.link.cloud.bean.SignedResponse;
-import com.link.cloud.bean.Voucher;
 
 import rx.Observable;
 
@@ -43,8 +41,13 @@ public interface IHttpClientHelper {
      * @param feature    指静脉数据
      * @return
      */
-    Observable<Member> bindVeinMemeber(String deviceId,int userType,int numberType,String numberValue,String feature);
-
+    Observable<Member> bindVeinMemeber(String deviceId,int userType,int numberType,String numberValue,String img1,String img2,String img3,String feature);
+    /**
+     * 心跳接口
+     * @param deviceId
+     * @return
+     */
+    Observable<ResultHeartBeat>deviceHeartBeat(String deviceId);
 
     /**
      * 根据设备ID和手机号查询会员信息
@@ -71,8 +74,20 @@ public interface IHttpClientHelper {
      * @param phoneNum 用户手机号
      * @return Observable<ReturnBean>
      */
-    Observable<SignUserdata> signedMember(String deviceID, String veinFingerID, String phoneNum);
+    Observable<Code_Message> signedMember(String deviceID, String veinFingerID, String phoneNum);
 
+    /**
+     * 发送日志信息
+     * @param deviceId
+     * @param uid
+     * @param uids
+     * @param feature
+     * @param time
+     * @param scope
+     * @param result
+     * @return
+     */
+    Observable<RestResponse> sendLogMessage(String deviceId, String uid,String uids,String feature,String time,String scope, String result);
     /**
      *
      * @param deviceID  设备ID
@@ -125,4 +140,21 @@ public interface IHttpClientHelper {
      */
     Observable<DownLoadData> downloadFeature(String messageId, String appid, String shopId, String deviceId, String uid);
 
+    /**
+     *
+     * @param deviceId
+     * @return
+     */
+    Observable<DownLoadData>downloadNotReceiver(String deviceId);
+
+    /**
+     *
+     * @param deviceId
+     * @return
+     */
+    Observable<UpDateBean>appUpdateInfo (String deviceId);
+
+    Observable<PagesInfoBean> getPagesInfo(String deviceId);
+    Observable<SyncFeaturesPage> syncUserFeaturePages(String deviceId, int currentPage);
+    Observable<Code_Message> checkInByQrCode(String deviceId, String qrcode);
 }

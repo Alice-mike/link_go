@@ -66,7 +66,7 @@ public class BaseApi {
                             .addInterceptor(mRewriteCacheControlInterceptor)
                             .addNetworkInterceptor(mRewriteCacheControlInterceptor)
                             .addInterceptor(interceptor)
-//                            .retryOnConnectionFailure(true)
+                            .retryOnConnectionFailure(false)
                             .connectTimeout(20, TimeUnit.SECONDS)
                             .readTimeout(20, TimeUnit.SECONDS)//设置读取超时时间
                             .writeTimeout(20, TimeUnit.SECONDS)//设置写入超时时间

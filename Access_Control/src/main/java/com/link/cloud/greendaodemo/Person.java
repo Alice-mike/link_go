@@ -18,129 +18,17 @@ public class Person {
     private int sex;
     private String pos;
     private String img;
+    private String fingerId;
     private String cardname;
     private String cardnumber;
     private String begintime;
     private String endtime;
-    private String fingermodel;
+    private String feature;
 
-    public void setPos(String pos) {
-        this.pos = pos;
-    }
-
-    public String getPos() {
-        return pos;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setUid(String uid) {
-        this.uid = uid;
-    }
-
-    public void setSex(int sex) {
-        this.sex = sex;
-    }
-
-    public void setUserType(int userType) {
-        this.userType = userType;
-    }
-
-    public void setImg(String img) {
-        this.img = img;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setNumber(String number) {
-        this.number = number;
-    }
-
-    public void setCardnumber(String cardnumber) {
-        this.cardnumber = cardnumber;
-    }
-
-    public void setCardname(String cardname) {
-        this.cardname = cardname;
-    }
-
-    public void setBegintime(String begintime) {
-        this.begintime = begintime;
-    }
-
-    public void setEndtime(String endtime) {
-        this.endtime = endtime;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getUid() {
-        return uid;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getNumber() {
-        return number;
-    }
-
-    public int getUserType() {
-        return userType;
-    }
-
-    public String getImg() {
-        return img;
-    }
-
-    public int getSex() {
-        return sex;
-    }
-
-    public String getCardname() {
-        return cardname;
-    }
-
-    public String getCardnumber() {
-        return cardnumber;
-    }
-
-    public String getBegintime() {
-        return begintime;
-    }
-
-    public String getEndtime() {
-        return endtime;
-    }
-
-    public void setFingermodel(String fingermodel) {
-        this.fingermodel = fingermodel;
-    }
-
-    public String getFingermodel() {
-        return fingermodel;
-    }
-
-    public Person(Long id, String uid, String name, int userType, String number, int sex, String img){
-        this.id=id;
-        this.uid=uid;
-        this.name=name;
-        this.userType=userType;
-        this.img=img;
-        this.sex=sex;
-    }
-
-    @Generated(hash = 1508411966)
-    public Person(Long id, int userType, String uid, String name, String number, int sex, String pos,
-            String img, String cardname, String cardnumber, String begintime, String endtime,
-            String fingermodel) {
+    @Generated(hash = 2055201281)
+    public Person(Long id, int userType, String uid, String name, String number,
+            int sex, String pos, String img, String fingerId, String cardname,
+            String cardnumber, String begintime, String endtime, String feature) {
         this.id = id;
         this.userType = userType;
         this.uid = uid;
@@ -149,11 +37,12 @@ public class Person {
         this.sex = sex;
         this.pos = pos;
         this.img = img;
+        this.fingerId = fingerId;
         this.cardname = cardname;
         this.cardnumber = cardnumber;
         this.begintime = begintime;
         this.endtime = endtime;
-        this.fingermodel = fingermodel;
+        this.feature = feature;
     }
 
     @Generated(hash = 1024547259)
@@ -168,5 +57,117 @@ public class Person {
                 ",phone"+number+'\''+
                 ",sex"+sex+'\''+
                 ",img"+img+'\''+"}";
+    }
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public int getUserType() {
+        return this.userType;
+    }
+
+    public void setUserType(int userType) {
+        this.userType = userType;
+    }
+
+    public String getUid() {
+        return this.uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getNumber() {
+        return this.number;
+    }
+
+    public void setNumber(String number) {
+        this.number = number;
+    }
+
+    public int getSex() {
+        return this.sex;
+    }
+
+    public void setSex(int sex) {
+        this.sex = sex;
+    }
+
+    public String getPos() {
+        return this.pos;
+    }
+
+    public void setPos(String pos) {
+        this.pos = pos;
+    }
+
+    public String getImg() {
+        return this.img;
+    }
+
+    public void setImg(String img) {
+        this.img = img;
+    }
+
+    public String getFingerId() {
+        return this.fingerId;
+    }
+
+    public void setFingerId(String fingerId) {
+        this.fingerId = fingerId;
+    }
+
+    public String getCardname() {
+        return this.cardname;
+    }
+
+    public void setCardname(String cardname) {
+        this.cardname = cardname;
+    }
+
+    public String getCardnumber() {
+        return this.cardnumber;
+    }
+
+    public void setCardnumber(String cardnumber) {
+        this.cardnumber = cardnumber;
+    }
+
+    public String getBegintime() {
+        return this.begintime;
+    }
+
+    public void setBegintime(String begintime) {
+        this.begintime = begintime;
+    }
+
+    public String getEndtime() {
+        return this.endtime;
+    }
+
+    public void setEndtime(String endtime) {
+        this.endtime = endtime;
+    }
+
+    public String getFeature() {
+        return this.feature;
+    }
+
+    public void setFeature(String feature) {
+        this.feature = feature;
     }
 }

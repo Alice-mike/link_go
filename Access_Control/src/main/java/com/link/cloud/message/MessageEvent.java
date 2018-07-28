@@ -1,7 +1,5 @@
 package com.link.cloud.message;
 
-import android.view.MotionEvent;
-
 import com.link.cloud.bean.Lockdata;
 
 /**
@@ -15,16 +13,12 @@ public class MessageEvent {
         public String deviceId;
         public Lockdata lockdata;
        public String errorStr;
-        public MessageEvent(int type,String deviceId,String userId) {
+        public MessageEvent(int type, String deviceId, String userId) {
             this.type = type;
             this.userId = userId;
             this.deviceId=deviceId;
         }
-        public MessageEvent(int type,Lockdata lockdata){
-            this.type=type;
-            this.lockdata=lockdata;
-        }
-        public MessageEvent(int type,String string){
+        public MessageEvent(int type, String string){
             this.type=type;
             this.errorStr=string;
         }
