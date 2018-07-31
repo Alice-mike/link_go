@@ -655,7 +655,8 @@ ConnectivityManager connectivityManager;
                     List<Person> list=personDao.loadAll();
                     if (list.size()==0) {
                         syncUserFeature.syncSign(deviceID);
-                        feature.getPagesInfo(deviceID);
+                        syncUserFeature.syncUser(deviceID);
+//                        feature.getPagesInfo(deviceID);
                         handler.sendEmptyMessageDelayed(0,1000);
                         //                        syncUserFeature.syncUser(deviceID);
                     }else {

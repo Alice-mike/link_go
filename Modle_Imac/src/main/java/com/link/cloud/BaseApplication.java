@@ -577,14 +577,16 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
                         PersonDao personDao= getDaoSession().getPersonDao();
                         List<Person>list=personDao.loadAll();
                         if (list.size()==0) {
+//                            syncUserFeature.syncUser(deviceData.getDeviceData().getDeviceId());
                             downloadFeature.getPagesInfo(deviceData.getDeviceData().getDeviceId());
                             if (downLoadListner != null) {
                                 downLoadListner.start();
                             }
                         }else {
                         }
-                        handler.sendEmptyMessageDelayed(0,1000);
-
+                        if(deviceData.getDeviceData().getDeviceId()!=null) {
+                            handler.sendEmptyMessageDelayed(0, 1000);
+                        }
                     }else {
                         Toast.makeText(getContext(),"网络已断开，请检查网络",Toast.LENGTH_LONG).show();
                     }

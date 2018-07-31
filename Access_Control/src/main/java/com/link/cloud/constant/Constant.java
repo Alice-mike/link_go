@@ -22,7 +22,6 @@
  * <http://www.gnu.org/philosophy/why-not-lgpl.html>.
  */
 package com.link.cloud.constant;
-
 /**
  * Created by Shaozy on 2016/8/10.
  */

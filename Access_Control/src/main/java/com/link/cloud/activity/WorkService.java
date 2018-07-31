@@ -336,6 +336,7 @@ public class WorkService extends AliyunMessageIntentService implements DeviceHea
 //                    Log.e(TAG,"get usb connect info success.");
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         UsbDevice usbDevice = (UsbDevice) msg.obj;
+
                         if(WorkService.this.usbMsgCallback!=null){
                             usbMsgCallback.onUsbConnSuccess(usbDevice.getManufacturerName(),usbDevice.getDeviceName());
                         }

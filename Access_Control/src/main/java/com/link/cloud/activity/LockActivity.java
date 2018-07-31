@@ -574,7 +574,9 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
                 if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
                     exitAlertDialog.show();
                     deviceId=userinfo.getString("deviceId","");
-                    downloadFeature.getPagesInfo(deviceId);
+//                    downloadFeature.getPagesInfo(deviceId);
+                    syncUserFeature.syncUser(deviceId);
+                    syncUserFeature.syncSign(deviceId);
                 }else {
                     mTts.startSpeaking(getResources().getString(R.string.network_error),mTtsListener);
                     Toast.makeText(this, getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();

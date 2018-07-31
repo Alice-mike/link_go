@@ -57,5 +57,6 @@ public class Constant {
     //public static String REST_API_URL = "http://c.rocketbird.cn/vein-api/";
 //    public static String REST_API_URL = "http://39.108.100.128:8085/api/";//mia_da
      public static String REST_API_URL = "http://39.108.100.128:8082/api/";//mia_da
+//        public static String REST_API_URL = " http://120.27.220.9:8082/api/";//测试环境
     public static final String BASE_DATA_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
 }

@@ -264,7 +264,6 @@ public class SignFragment_One extends BaseFragment implements MatchVeinTaskContr
         ConnectivityManager connectivityManager;//用于判断是否有网络
         connectivityManager =(ConnectivityManager)activity.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
         NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
-        if(info!=null){
             String reg = "[^\u4e00-\u9fa5]";
             String syt=e.getMessage().replaceAll(reg, "");
             Logger.e("SignActivity"+syt);
@@ -275,7 +274,7 @@ public class SignFragment_One extends BaseFragment implements MatchVeinTaskContr
                         activity.mTts.startSpeaking(syt,activity.mTtsListener);
                         text_error.setText(syt);
                         try {
-                            Thread.sleep(3000);
+                            Thread.sleep(2000);
                         } catch (InterruptedException e1) {
                             e1.printStackTrace();
                         }
@@ -283,14 +282,7 @@ public class SignFragment_One extends BaseFragment implements MatchVeinTaskContr
                 }
             };
             new Handler(Looper.getMainLooper()).post(runnable);
-        }else {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
-            }
-            this.showProgress(false, false, e.getDisplayMessage());
-        }
+
         setupParam();
     }
 
@@ -334,14 +326,8 @@ public class SignFragment_One extends BaseFragment implements MatchVeinTaskContr
                     Logger.e("BindActivty===========state" + state);
                     if (state == 1 || state == 2) {
                         continue;
-                    } else if (state == 3) {
-                        try {
-                            Thread.sleep(200);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
                     }
-                    byte[] img= MdFvHelper.tryGetFirstBestImg(WorkService.microFingerVein,0,8);
+                    byte[] img= MdFvHelper.tryGetFirstBestImg(WorkService.microFingerVein,0,5);
                     if (img == null) {
                         if (handler != null) {
                         Message message = new Message();
@@ -356,12 +342,12 @@ public class SignFragment_One extends BaseFragment implements MatchVeinTaskContr
                         continue;
                     }
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(700);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                     userUid=findfeature(img);
-                    if (score[0] > 0.63) {
+                    if (userUid!=null) {
                         Log.e("Identify success,", "pos=" + pos[0] + ", score=" + score[0]);
                         if (handler != null) {
                             Message message = new Message();
@@ -378,7 +364,7 @@ public class SignFragment_One extends BaseFragment implements MatchVeinTaskContr
                     }
                 }else {
                     try {
-                        Thread.sleep(1500);
+                        Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -442,16 +428,17 @@ public class SignFragment_One extends BaseFragment implements MatchVeinTaskContr
         NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
          if (identifyResult) {
           if (info!=null&&uids!=null) {
-           sendLogMessageTastContract.sendLog(deviceId, Uid, uids, bytesToHexString(img), strBeginDate, score[0] + "", getResources().getString(R.string.check_successful));
+           sendLogMessageTastContract.sendLog(deviceId, Uid, uids, bytesToHexString(img), strBeginDate, score[0] + "",activity.getResources().getString(R.string.check_successful));
         }
            Logger.e("SignActivity"+"pos="+pos[0]+"score="+score[0]+"成功");
             return Uid;
         }else {
             if (info!=null&&uids!=null) {
-                sendLogMessageTastContract.sendLog(deviceId, Uid, uids, bytesToHexString(img), strBeginDate, score[0] + "", getResources().getString(R.string.check_failed));
+                sendLogMessageTastContract.sendLog(deviceId, Uid, uids, bytesToHexString(img), strBeginDate, score[0] + "", activity.getResources().getString(R.string.check_failed));
             }
                     Logger.e("SignActivity"+"pos="+pos[0]+"score="+score[0]+"失败");
             return null;
+
         }
     }
 
