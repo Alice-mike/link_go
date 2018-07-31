@@ -624,7 +624,8 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
                         if (downLoadListner != null) {
                             downLoadListner.start();
                         }
-                        feature.getPagesInfo(FileUtils.loadDataFromFile(getContext(), "deviceId.text"));
+                        syncUserFeature.syncUser(FileUtils.loadDataFromFile(getContext(), "deviceId.text"));
+//                        feature.getPagesInfo(FileUtils.loadDataFromFile(getContext(), "deviceId.text"));
                         }
                     }
                 }else {

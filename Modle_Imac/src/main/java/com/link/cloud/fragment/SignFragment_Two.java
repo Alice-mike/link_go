@@ -97,9 +97,9 @@ public class SignFragment_Two extends BaseFragment  {
                 phoneNum = phoneNum.substring(0, 3) + "****" + phoneNum.substring(7, phoneNum.length());
             }
             menber_phone.setText(phoneNum);
-            if ("1".equals(bundle.getString("usertype"))) {
+            if (bundle.getInt("usertype")==1) {
                 usertype.setText(R.string.member);
-            } else if ("2".equals(bundle.getInt("usertype"))) {
+            } else if (bundle.getInt("usertype")==2) {
                 usertype.setText(R.string.employee);
             } else {
                 usertype.setText(R.string.coach);

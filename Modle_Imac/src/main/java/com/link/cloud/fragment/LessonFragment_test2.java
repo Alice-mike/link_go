@@ -345,13 +345,13 @@ LinearLayout layout_two;
 //        Logger.e("SigeActivity-------"+"executeSql");
         personDao= BaseApplication.getInstances().getDaoSession().getPersonDao();
         personDao.loadAll();
-        String sql = "select FINGERMODEL from PERSON" ;
+        String sql = "select FEATURE from PERSON" ;
         int i =0;
         Cursor cursor = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
         byte[][] feature=new byte[cursor.getCount()][];
         while (cursor.moveToNext()){
 //            Logger.e("SigeActivity----no---");
-            int nameColumnIndex = cursor.getColumnIndex("FINGERMODEL");
+            int nameColumnIndex = cursor.getColumnIndex("FEATURE");
             String strValue=cursor.getString(nameColumnIndex);
 //            Logger.e("SigeActivity-------"+strValue);
             feature[i]=hexStringToByte(strValue);

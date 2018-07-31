@@ -98,7 +98,10 @@ public class Finger_identify {
            DateFormat dateTimeformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
            SharedPreferences userinfo=activty.getSharedPreferences("user_info",0);
            String deviceId=userinfo.getString("deviceId","");
-            String Uid = Uids[pos[0]];
+           String Uid="";
+           if (Uids.length>0) {
+                Uid = Uids[pos[0]];
+           }
            String uids= StringUtils.join(Uids,",");
            String strBeginDate = dateTimeformat.format(new Date());
            if (identifyResult) {

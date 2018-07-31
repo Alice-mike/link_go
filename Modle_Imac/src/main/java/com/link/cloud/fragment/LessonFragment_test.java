@@ -30,6 +30,8 @@ import com.link.cloud.greendao.gen.PersonDao;
 import com.link.cloud.greendaodemo.Person;
 import com.link.cloud.ui.HorizontalListViewAdapter;
 import com.link.cloud.ui.RollListView;
+import com.link.cloud.utils.FileUtils;
+import com.link.cloud.utils.Utils;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.BaseApplication;
 
@@ -117,7 +119,7 @@ LinearLayout layout_two;
     boolean ret = false;
     int[] pos = new int[1];
     float[] score = new float[1];
-    int userType;
+    String userType;
     String userid,caochId,clerkid,personUid;
     EliminateActivity activity;
     PersonDao personDao;
@@ -150,57 +152,27 @@ LinearLayout layout_two;
         public void handleMessage(android.os.Message msg) {
             switch (msg.what) {
                 case 0:
+                    PersonDao personDao=BaseApplication.getInstances().getDaoSession().getPersonDao();
+                    QueryBuilder queryBuilder=personDao.queryBuilder();
+                    List<Person>list=queryBuilder.where(PersonDao.Properties.Uid.eq(personUid)).list();
+                    userType=list.get(0).getUserType();
                     Logger.e("userType======="+userType);
-                    if (caochId==null&&userType==2){
+                    if (caochId==null&&"2".equals(userType)){
                         callBackValue.setActivtyChange("2");
                         caochId=personUid;
                          text_error.setText("请会员放置手指");
-                    }else if (caochId!=null&&userType==0){
+                    }else if (caochId!=null&&"1".equals(userType)){
                         userid=personUid;
                         callBackValue.setActivtyChange("3");
-                        layout_error_text.setVisibility(View.GONE);
-                        layout_three.setVisibility(View.GONE);
-                        layout_two.setVisibility(View.GONE);
-                        lessonLayout.setVisibility(View.VISIBLE);
+//                        layout_error_text.setVisibility(View.GONE);
+//                        layout_three.setVisibility(View.GONE);
+//                        layout_two.setVisibility(View.GONE);
+//                        lessonLayout.setVisibility(View.VISIBLE);
                         flog=false;
                         Logger.e("LessonFragment========userid"+userid+"caochId"+caochId);
                         SharedPreferences userinfo=activity.getSharedPreferences("user_info",0);
                        String device=userinfo.getString("device","");
-//                        for (int i=0;i<num;i++) {
-//                            lessonId[0]="222222";
-//                            lessonName[0]="高温瑜伽";
-//                            lessonDate[0]="2018/05/28-2018/05/28";
-//                        }
-//                        hListViewAdapter=new HorizontalListViewAdapter(getContext(),1,"张教练","王大壮","13022222222","222222","高温瑜伽","2018/05/28-2018/05/28");
-//                        horizontalListView.setAdapter(hListViewAdapter);
-//                        horizontalListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//                            @Override
-//                            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-//                                hListViewAdapter.setSelectIndex(position);
-//                                selectPosition = position;
-//                                lessonnum=lessonResponse.getLessonResponse().lessonInfo[position].getLessonId();
-//                                hListViewAdapter.notifyDataSetChanged();
-//                            }
-//                        });
-//                        clickListener = new View.OnClickListener() {
-//                            @Override
-//                            public void onClick(View v) {
-//                                // TODO Auto-generated method stub
-//                                switch (v.getId()) {
-//                                    case R.id.up_lesson:
-//                        uplesson();
-//                                        Logger.e("eliminateSuccess========="+"R.id.up_lesson");
-//                                        break;
-//                                    case R.id.next_lesson:
-//                        nextlesson();
-//                                        Logger.e("eliminateSuccess========="+"next_lesson");
-//                                        break;
-//                                }
-//                            }
-//                        };
-//                        up_lesson.setOnClickListener(clickListener);
-//                        next_lesson.setOnClickListener(clickListener);
-                        presenter.eliminateLesson(device,1,userid,caochId,clerkid);
+                        presenter.eliminateLesson(FileUtils.loadDataFromFile(activity,"deviceId.text"),1,userid,caochId,clerkid);
                     }else {
                         text_error.setText("请教练放置手指");
                     }
@@ -297,7 +269,7 @@ LinearLayout layout_two;
                     personUid=findfeature(img);
 //                    ret=WorkService.microFingerVein.fv_index(featuer, featuer.length / 3352, img, pos, score);
 //                    Logger.e("BindActivty===========count" +featuer.length / 3352 +"pos==="+pos[0]+"score= ="+score[0]);
-                    if (ret == true && score[0] > 0.63) {
+                    if (personUid!=null ) {
                         Log.e("Identify success,", "pos=" + pos[0] + ", score=" + score[0]);
                         if (handler != null) {
                             Message message = new Message();
@@ -346,13 +318,13 @@ LinearLayout layout_two;
         long startime=System.currentTimeMillis();
         Log.e("SignFragment_one","startime:"+startime);
         personDao= BaseApplication.getInstances().getDaoSession().getPersonDao();
-        String sql = "select FINGERMODEL,UID from PERSON";
+        String sql = "select FEATURE,UID from PERSON";
         int i =0;
         Cursor cursor = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
         byte[][] feature=new byte[cursor.getCount()][];
         String [] Uids=new String[cursor.getCount()];
         while (cursor.moveToNext()){
-            int nameColumnIndex = cursor.getColumnIndex("FINGERMODEL");
+            int nameColumnIndex = cursor.getColumnIndex("FEATURE");
             String strValue=cursor.getString(nameColumnIndex);
             feature[i]=hexStringToByte(strValue);
             Uids[i]=cursor.getString(cursor.getColumnIndex("UID"));

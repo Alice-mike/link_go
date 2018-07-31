@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -73,7 +74,7 @@ import md.com.sdk.MicroFingerVein;
  * Created by Administrator on 2017/8/18.
  */
 
-public class NewMainActivity extends AppCompatActivity implements DownloadFeature.download{
+public class NewMainActivity extends AppCompatActivity implements DownloadFeature.download,SyncUserFeature.syncUser{
     @Bind(R.id.fabExit)
     FloatingActionButton fabExit;
     @Bind(R.id.layout_title)
@@ -168,7 +169,7 @@ public class NewMainActivity extends AppCompatActivity implements DownloadFeatur
                     }
                     process.destroy();
                 }catch (Exception e){
-                }
+            }
             return true;
         }
     }
@@ -193,10 +194,36 @@ public class NewMainActivity extends AppCompatActivity implements DownloadFeatur
                     exitAlertDialogshow.show();
                     SharedPreferences sharedPreferences = getSharedPreferences("user_info", 0);
                     String deviceId = sharedPreferences.getString("deviceId", "");
+
                     downloadFeature.getPagesInfo(deviceId);
                 }else {
                     Toast.makeText(NewMainActivity.this,"网络已断开，请检查网络",Toast.LENGTH_LONG).show();
                 }
+                return false;
+            }
+        });
+        textView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                new AlertDialog.Builder(NewMainActivity.this)
+                        .setTitle("确定退出软件么？")
+                        .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        })
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent intent = new Intent();
+                                // 为Intent设置Action、Category属性
+                                intent.setAction(Intent.ACTION_MAIN);// "android.intent.action.MAIN"
+                                intent.addCategory(Intent.CATEGORY_HOME); //"android.intent.category.HOME"
+                                startActivity(intent);
+                            }
+                        })
+                        .create().show();
                 return false;
             }
         });
@@ -469,6 +496,19 @@ public class NewMainActivity extends AppCompatActivity implements DownloadFeatur
                 }
             }).start();
         }
+    }
+
+    @Override
+    public void syncUserSuccess(DownLoadData resultResponse) {
+        personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
+        Person person = new Person();
+        if (resultResponse.getData().size() > 0) {
+            personDao.deleteAll();
+            personDao.insertInTx(resultResponse.getData());
+            Toast.makeText(NewMainActivity.this, getResources().getString(R.string.syn_data), Toast.LENGTH_SHORT).show();
+        }
+
+        exitAlertDialog.dismiss();
     }
 
     @Override

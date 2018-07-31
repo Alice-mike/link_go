@@ -31,7 +31,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 23
         versionCode 228
-        versionName "2.2.8.7"
+        versionName "2.2.8.8"
         multiDexEnabled true
         compileOptions {
             sourceCompatibility JavaVersion.VERSION_1_7

@@ -82,7 +82,7 @@ public class WelcomeActivity extends Activity {
                 handler.sendEmptyMessageDelayed(0,3000);
             }
         }else {
-            handler.sendEmptyMessageDelayed(0,3000);
+//            handler.sendEmptyMessageDelayed(0,3000);
         }
     }
     private Handler handler = new Handler() {
