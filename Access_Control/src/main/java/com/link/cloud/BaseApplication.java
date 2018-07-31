@@ -395,9 +395,15 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     @Override
     public void downloadSuccess(DownLoadData resultResponse) {
         PersonDao personDao=BaseApplication.getInstances().getDaoSession().getPersonDao();
+        Log.e("downloadSuccess: ",  resultResponse.getData().size()+"" );
+        List<Person> people = personDao.loadAll();
+        Log.e("downloadSuccess: ",  people.size()+"" );
         if (resultResponse.getData().size()>0){
             personDao.insertInTx(resultResponse.getData());
         }
+        List<Person> people2 = personDao.loadAll();
+        Log.e("downloadSuccess: ",  people2.size()+"" );
+
     }
     @Override
     public void downloadNotReceiver(DownLoadData resultResponse) {

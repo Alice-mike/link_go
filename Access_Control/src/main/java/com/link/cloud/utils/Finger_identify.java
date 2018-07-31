@@ -2,6 +2,7 @@ package com.link.cloud.utils;
 
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.util.Log;
 
 import com.link.cloud.BaseApplication;
 import com.link.cloud.activity.LockActivity;
@@ -31,6 +32,7 @@ public class Finger_identify {
        String sql;
        boolean identifyResult=false;
        sql = "select UID,FEATURE from PERSON where UID in(select USER_ID from SIGN_USER)" ;
+
        cursor = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
        byte[][] feature=new byte[cursor.getCount()][];
        String [] Uids=new String[cursor.getCount()];
@@ -45,6 +47,7 @@ public class Finger_identify {
        int len = 0;
        // 计算一维数组长度
        if(feature.length>0) {
+           Log.e("finger_identify: ",feature.length+"11111111111111111111111" );
            for (byte[] element : feature) {
                len += element.length;
            }
@@ -62,7 +65,7 @@ public class Finger_identify {
            if (score[0]<IDENTIFY_SCORE_THRESHOLD){
                i=0;
                Cursor cursor1;
-               sql="select t2.UID,t2.FEATURE from  PERSON t2";
+               sql="select UID,FEATURE from  PERSON";
                cursor1 = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
                Logger.e("finger_identify"+"cursor1.getCount()"+cursor1.getCount());
                feature=new byte[cursor1.getCount()][];

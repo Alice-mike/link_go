@@ -77,7 +77,7 @@ public class MyMessageReceiver extends MessageReceiver  {
         Log.i(REC_TAG,"收到一条推送消息 ： " + cPushMessage.getTitle() + ", content:" + cPushMessage.getContent());
 
         switch (cPushMessage.getTitle()){
-            case "1":
+            case "绑定数据推送":
                 BaseApplication.setConsoleText(cPushMessage.getContent());
                 break;
             case "绑定人脸数据推送":
