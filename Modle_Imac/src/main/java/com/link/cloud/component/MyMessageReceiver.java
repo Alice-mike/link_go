@@ -6,6 +6,9 @@ import android.util.Log;
 
 import com.alibaba.sdk.android.push.MessageReceiver;
 import com.alibaba.sdk.android.push.notification.CPushMessage;
+import com.google.gson.Gson;
+import com.link.cloud.bean.BindFaceMes;
+import com.link.cloud.utils.DownLoad;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.BaseApplication;
 
@@ -75,10 +78,11 @@ public class MyMessageReceiver extends MessageReceiver {
         switch (cPushMessage.getTitle()){
             case "1":
                 tojoson(cPushMessage.getContent());
-            case "2":
-//                intent = new Intent();
-//                intent.setClass(context,PayActivity.class);
-//                context.startActivity(intent);
+                break;
+            case "绑定人脸数据推送":
+                Gson gson = new Gson();
+                BindFaceMes bindFaceMes = gson.fromJson(cPushMessage.getContent(), BindFaceMes.class);
+                DownLoad.download(bindFaceMes.getFaceUrl(),bindFaceMes.getUid());
                 break;
 
         }

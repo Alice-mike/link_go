@@ -55,4 +55,14 @@
     <string name="digitKeyppad_three">3</string>
     <string name="digitKeyppad_two">2</string>
     <string name="digitKeyppad_one">1</string>
+    <string name="face_back">返回</string>
+    <string name="face_bind">绑定人脸</string>
+    <string name="会员卡号">会员卡号</string>
+    <string name="确定">确定</string>
+    <string name="introduce_faces">请将人脸置于相机预览框内</string>
+    <string name="face_sign">刷脸签到</string>
+    <string name="choose_sign_way">请选择您的签到方式</string>
+    <string name="veune_choose_sign">指静脉签到</string>
+    <string name="sign_choose_scan">扫码签到</string>
+
 </resources>
