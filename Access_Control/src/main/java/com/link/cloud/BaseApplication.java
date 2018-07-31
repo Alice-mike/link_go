@@ -56,6 +56,7 @@ import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.PushMessage;
 import com.link.cloud.bean.Sign_data;
 import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.component.MyMessageReceiver;
@@ -78,7 +79,9 @@ import com.link.cloud.greendaodemo.Person;
 import com.link.cloud.greendaodemo.SignUser;
 import com.link.cloud.message.CrashHandler;
 import com.link.cloud.setting.TtsSettings;
+import com.link.cloud.utils.DownLoad;
 import com.link.cloud.utils.DownloadUtils;
+import com.link.cloud.utils.FaceDB;
 import com.link.cloud.utils.FileUtils;
 import com.link.cloud.view.ProgressHUD;
 import com.orhanobut.logger.Logger;
@@ -101,6 +104,8 @@ import java.io.LineNumberReader;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.xml.transform.Result;
 
@@ -142,6 +147,7 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     MicroFingerVein microFingerVein;
     MyMessageReceiver receiver;
     SharedPreferences mSharedPreferences;
+    public FaceDB mFaceDB;
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
@@ -163,7 +169,7 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         instances = this;
         ourInstance = this;
         setDatabase();
-
+        mFaceDB = new FaceDB(Environment.getExternalStorageDirectory().getAbsolutePath() + "/faceFile");
          context=getApplicationContext();
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override
@@ -344,6 +350,23 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         }
         Logger.e(resultResponse.getMsg()+resultResponse.getData().getPackage_path());
     }
+
+    @Override
+    public void syncUserFacePagesSuccess(SyncUserFace resultResponse) {
+        ExecutorService service = Executors.newFixedThreadPool(8);
+        for(int x =0;x<resultResponse.getData().size();x++){
+
+            int finalX = x;
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    DownLoad.download(resultResponse.getData().get(finalX).getFaceUrl(),resultResponse.getData().get(finalX).getUid());
+                }
+            };
+            service.execute(runnable);
+        }
+    }
+
     private void downLoadApk(String downloadurl) {
         // 判断当前用户是否有sd卡
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
@@ -634,7 +657,8 @@ ConnectivityManager connectivityManager;
        Logger.e("BaseApplication+devicedate"+deviceData.getDeviceData().getDeviceId()+"numberType"+deviceData.getDeviceData().getNumberType());
             SharedPreferences userInfo = getSharedPreferences("user_info",MODE_MULTI_PROCESS);
             SharedPreferences.Editor editor=userInfo.edit();
-            editor.putString("deviceId", deviceData.getDeviceData().getDeviceId());
+            editor.putString("deviceId",deviceData.getDeviceData().getDeviceId() );
+            feature.syncUserFacePages(deviceData.getDeviceData().getDeviceId());
             editor.putInt("numberType",deviceData.getDeviceData().getNumberType());
             editor.commit();
             if (!"".equals(deviceData.getDeviceData().getDeviceId())) {

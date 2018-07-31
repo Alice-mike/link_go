@@ -9,7 +9,11 @@ import com.alibaba.sdk.android.push.CloudPushService;
 import com.alibaba.sdk.android.push.CommonCallback;
 import com.alibaba.sdk.android.push.MessageReceiver;
 import com.alibaba.sdk.android.push.notification.CPushMessage;
+import com.google.gson.Gson;
 import com.link.cloud.BaseApplication;
+import com.link.cloud.bean.BindFaceMes;
+
+import com.link.cloud.utils.DownLoad;
 import com.orhanobut.logger.Logger;
 
 import org.json.JSONArray;
@@ -71,7 +75,18 @@ public class MyMessageReceiver extends MessageReceiver  {
     @Override
     public void onMessage(Context context, CPushMessage cPushMessage) {
         Log.i(REC_TAG,"收到一条推送消息 ： " + cPushMessage.getTitle() + ", content:" + cPushMessage.getContent());
-        BaseApplication.setConsoleText(cPushMessage.getContent());
+
+        switch (cPushMessage.getTitle()){
+            case "1":
+                BaseApplication.setConsoleText(cPushMessage.getContent());
+                break;
+            case "绑定人脸数据推送":
+                Gson gson = new Gson();
+                BindFaceMes bindFaceMes = gson.fromJson(cPushMessage.getContent(), BindFaceMes.class);
+                DownLoad.download(bindFaceMes.getFaceUrl(),bindFaceMes.getUid());
+                break;
+
+        }
     }
 
     private void tojoson(String joson){
