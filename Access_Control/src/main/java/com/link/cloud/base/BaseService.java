@@ -20,6 +20,7 @@ import com.link.cloud.bean.ReturnBean;
 import com.link.cloud.bean.Sign_data;
 import com.link.cloud.bean.SignedResponse;
 import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.bean.UserResponse;
@@ -27,9 +28,14 @@ import com.link.cloud.bean.Voucher;
 
 import org.json.JSONObject;
 
+import okhttp3.ResponseBody;
+import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
+import retrofit2.http.Streaming;
+import retrofit2.http.Url;
 import rx.Observable;
 
 /**
@@ -136,6 +142,10 @@ public interface BaseService {
 
     @POST("deviceUpdate")
     Observable<DeviceUpdate>deviceUpdate(@Body JsonObject params);
-
+    @Streaming //大文件时要加不然会OOM
+    @GET
+    Call<ResponseBody> downloadFile(@Url String fileUrl);
+    @POST("syncUserFacePages")
+    Observable<SyncUserFace>syncUserFacePages(@Body JsonObject params);
 
 }

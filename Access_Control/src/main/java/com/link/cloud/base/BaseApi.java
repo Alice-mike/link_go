@@ -53,8 +53,8 @@ public class BaseApi {
         this.baseService = retrofit.create(BaseService.class);
     }
     private void initOkHttpClient() {
-//        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-//        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+       HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+      interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         if (mOkHttpClient == null) {
             synchronized (BaseApi.class) {
                 if (mOkHttpClient == null) {
@@ -67,7 +67,7 @@ public class BaseApi {
                             .cache(cache)
                             .addInterceptor(mRewriteCacheControlInterceptor)
                             .addNetworkInterceptor(mRewriteCacheControlInterceptor)
-//                            .addInterceptor(interceptor)
+                            .addInterceptor(interceptor)
                             .connectTimeout(20, TimeUnit.SECONDS)
                             .readTimeout(20, TimeUnit.SECONDS)//设置读取超时时间
                             .writeTimeout(20, TimeUnit.SECONDS)//设置写入超时时间

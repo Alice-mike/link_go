@@ -262,6 +262,17 @@
         <activity android:name=".activity.LessonDownActivity"
             android:theme="@style/AppThemenew"
             android:windowSoftInputMode="stateHidden|stateAlwaysHidden"
+            />   <activity android:name=".activity.SignChooseActivity"
+            android:theme="@style/AppThemenew"
+            android:windowSoftInputMode="stateHidden|stateAlwaysHidden"
+            />
+        <activity android:name=".activity.BindFaceActivity"
+            android:theme="@style/AppThemenew"
+            android:windowSoftInputMode="stateHidden|stateAlwaysHidden"
+            />
+        <activity android:name=".activity.FaceSign"
+            android:theme="@style/AppThemenew"
+            android:windowSoftInputMode="stateHidden|stateAlwaysHidden"
             />
 
         <meta-data

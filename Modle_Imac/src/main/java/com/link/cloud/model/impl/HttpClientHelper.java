@@ -1,14 +1,18 @@
 package com.link.cloud.model.impl;
+import android.widget.ImageView;
+
 import com.google.gson.JsonObject;
 import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
+import com.link.cloud.bean.FaceBindBean;
 import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.RestResponse;
 import com.link.cloud.bean.ResultHeartBeat;
 import com.link.cloud.bean.RetrunLessons;
 import com.link.cloud.bean.SignUserdata;
 import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.base.BaseApi;
@@ -17,6 +21,13 @@ import com.link.cloud.bean.LessonResponse;
 import com.link.cloud.bean.Member;
 import com.link.cloud.bean.ReturnBean;
 import com.link.cloud.model.IHttpClientHelper;
+
+import java.io.File;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import retrofit2.http.Multipart;
 import rx.Observable;
 /**
  * Created by Shaozy on 2016/8/10.
@@ -24,6 +35,8 @@ import rx.Observable;
 public class HttpClientHelper implements IHttpClientHelper {
     public Boolean flag=true;
     private static final HttpClientHelper ourInstance = new HttpClientHelper();
+
+
     public static HttpClientHelper getInstance() {
         return ourInstance;
     }
@@ -242,6 +255,39 @@ public class HttpClientHelper implements IHttpClientHelper {
             Logger.e("HttpClientHelper"+e.getMessage());
         }
         return BaseApi.getInstance().getBaseService().checkInByQrCode(params);
+    }
+    @Override
+    public Observable<SyncUserFace> syncUserFacePages(String deviceId) {
+        JsonObject params = new JsonObject();
+        try {
+            params.addProperty("deviceId", deviceId);
+
+
+        } catch (Exception e) {
+            Logger.e("HttpClientHelper"+e.getMessage());
+        }
+        return BaseApi.getInstance().getBaseService().syncUserFacePages(params);
+    }
+
+    @Override
+    public Observable<FaceBindBean> bindFace(String deviceId, int numberType, String numberValue, int userType, String path,String faceFile) {
+
+           RequestBody requestdeviceId = RequestBody.create(MediaType.parse("multipart/form-data"), deviceId);
+            RequestBody requestnumberType = RequestBody.create(MediaType.parse("multipart/form-data"), numberType+"");
+            RequestBody requestnumberValue = RequestBody.create(MediaType.parse("multipart/form-data"), numberValue);
+            RequestBody requestuserType = RequestBody.create(MediaType.parse("multipart/form-data"), userType+"");
+            RequestBody link = RequestBody.create(MediaType.parse("multipart/form-data"), "link");
+            RequestBody key = RequestBody.create(MediaType.parse("multipart/form-data"), "848ec6fa44ac6bae");
+            RequestBody dateTme = RequestBody.create(MediaType.parse("multipart/form-data"), "1512028642184");
+            RequestBody sign = RequestBody.create(MediaType.parse("multipart/form-data"), "cc5224ee3e9f2e2089624f676d840524");
+            File file =new File(path);
+            RequestBody requestImgFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+           MultipartBody.Part requestImgPart = MultipartBody.Part.createFormData("imgFile", file.getName(), requestImgFile);
+            File file2 =new File(faceFile);
+            RequestBody requestfacedata = RequestBody.create(MediaType.parse("multipart/form-data"), file2);
+           MultipartBody.Part facedataPart = MultipartBody.Part.createFormData("file", file2.getName(), requestfacedata);
+
+        return BaseApi.getInstance().getBaseService().bindFace(requestdeviceId,requestuserType,requestnumberValue,requestnumberType,link,key,dateTme,sign,requestImgPart,facedataPart);
     }
 
 

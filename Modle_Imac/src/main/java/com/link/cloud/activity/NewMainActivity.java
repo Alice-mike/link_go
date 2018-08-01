@@ -42,6 +42,7 @@ import com.link.cloud.base.ApiException;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.contract.DownloadFeature;
 import com.link.cloud.contract.SyncUserFeature;
@@ -234,7 +235,7 @@ public class NewMainActivity extends AppCompatActivity implements DownloadFeatur
         intentFilter.addAction(ACTION_UPDATEUI);
         registerReceiver(mesReceiver, intentFilter);
     }
-    @OnClick({R.id.bt_main_bind,R.id.bt_main_sign,R.id.bt_main_pay,R.id.bt_main_up,R.id.bt_main_down,R.id.fabExit})
+    @OnClick({R.id.bt_main_bind,R.id.bt_main_sign,R.id.bt_main_pay,R.id.bt_main_up,R.id.bt_main_down,R.id.fabExit,R.id.bt_main_bind_face})
     public void OnClick(View view){
         connectivityManager =(ConnectivityManager)NewMainActivity.this.getSystemService(Context.CONNECTIVITY_SERVICE);//获取当前网络的连接服务
         NetworkInfo info =connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
@@ -256,7 +257,20 @@ public class NewMainActivity extends AppCompatActivity implements DownloadFeatur
                 if (info!=null) {
                     if (Utils.isFastClick()) {
                         intent = new Intent();
-                        intent.setClass(NewMainActivity.this, SigeActivity.class);
+                        intent.setClass(NewMainActivity.this, SignChooseActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
+                    }
+                }else {
+                    Toast.makeText(NewMainActivity.this,"网络已断开，请检查网络",Toast.LENGTH_LONG).show();
+                }
+                break;
+                case R.id.bt_main_bind_face:
+                if (info!=null) {
+                    if (Utils.isFastClick()) {
+                        intent = new Intent();
+                        intent.setClass(NewMainActivity.this, BindFaceActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
                         overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
@@ -456,6 +470,11 @@ public class NewMainActivity extends AppCompatActivity implements DownloadFeatur
     }
     @Override
     public void downloadApK(UpDateBean resultResponse) {
+    }
+
+    @Override
+    public void syncUserFacePagesSuccess(SyncUserFace resultResponse) {
+
     }
 
     ArrayList<Person> SyncFeaturesPages = new ArrayList<>();
