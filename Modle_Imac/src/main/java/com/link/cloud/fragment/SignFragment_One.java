@@ -94,7 +94,6 @@ public class SignFragment_One extends BaseFragment implements MatchVeinTaskContr
     TextView text_error;
     @Bind(R.id.button_layout)
     LinearLayout button_layout;
-
     byte[] aByte={0};
     int action;
     public SigeActivity activity;
@@ -148,7 +147,6 @@ public class SignFragment_One extends BaseFragment implements MatchVeinTaskContr
         layout_three.setVisibility(View.VISIBLE);
         sendLogMessageTastContract=new SendLogMessageTastContract();
         sendLogMessageTastContract.attachView(this);
-
     }
     @Override
     protected void initListeners() {

@@ -193,7 +193,6 @@ public class NewMainActivity extends AppCompatActivity implements DownloadFeatur
                     exitAlertDialogshow.show();
                     SharedPreferences sharedPreferences = getSharedPreferences("user_info", 0);
                     String deviceId = sharedPreferences.getString("deviceId", "");
-
                     downloadFeature.getPagesInfo(deviceId);
                 }else {
                     Toast.makeText(NewMainActivity.this,"网络已断开，请检查网络",Toast.LENGTH_LONG).show();

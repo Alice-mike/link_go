@@ -563,6 +563,7 @@ public class MainFragment extends BaseFragment implements AdminopenCabinet.admin
                 exitAlertDialog1.show();
                 break;
             case R.id.back_home:
+                activity.microFingerVein.close();
                 Intent intent = new Intent();
                 // 为Intent设置Action、Category属性
                 intent.setAction(Intent.ACTION_MAIN);// "android.intent.action.MAIN"

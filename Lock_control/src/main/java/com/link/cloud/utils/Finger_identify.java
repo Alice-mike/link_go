@@ -29,7 +29,6 @@ public class Finger_identify {
        float[]score=new float[1];
        int i=0;
        Cursor cursor;
-       boolean identifyResult=false;
        String sql;
        sql = "select UID,FEATURE from PERSON where UID in(select USER_ID from SIGN_USER)" ;
        cursor = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
@@ -50,20 +49,19 @@ public class Finger_identify {
                len += element.length;
            }
            // 复制元素
-           byte[] nFeatuer = new byte[len];
+           byte[]  nFeatuer = new byte[len];
            int index = 0;
            for (byte[] element : feature) {
                for (byte element2 : element) {
                    nFeatuer[index++] = element2;
                }
            }
-            identifyResult = activty.microFingerVein.fv_index(nFeatuer, nFeatuer.length / 3352, img, pos, score);//比对是否通过
+           boolean  identifyResult = activty.microFingerVein.fv_index(nFeatuer, nFeatuer.length / 3352, img, pos, score);//比对是否通过
            identifyResult = identifyResult && score[0] > IDENTIFY_SCORE_THRESHOLD;//得分是否达标
-       }
            if (score[0]<IDENTIFY_SCORE_THRESHOLD){
                i=0;
                Cursor cursor1;
-               sql="select t2.UID,t2.FEATURE from  PERSON t2";
+               sql="select UID,FEATURE from  PERSON";
                cursor1 = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
                Logger.e("finger_identify"+"cursor1.getCount()"+cursor1.getCount());
                feature=new byte[cursor1.getCount()][];
@@ -82,8 +80,8 @@ public class Finger_identify {
                        len += element.length;
                    }
                    // 复制元素
-                   byte[] nFeatuer = new byte[len];
-                  int index = 0;
+                   nFeatuer = new byte[len];
+                   index = 0;
                    for (byte[] element : feature) {
                        for (byte element2 : element) {
                            nFeatuer[index++] = element2;
@@ -98,10 +96,7 @@ public class Finger_identify {
            DateFormat dateTimeformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
            SharedPreferences userinfo=activty.getSharedPreferences("user_info",0);
            String deviceId=userinfo.getString("deviceId","");
-           String Uid="";
-           if (Uids.length>0) {
-                Uid = Uids[pos[0]];
-           }
+            String Uid = Uids[pos[0]];
            String uids= StringUtils.join(Uids,",");
            String strBeginDate = dateTimeformat.format(new Date());
            if (identifyResult) {
@@ -117,5 +112,41 @@ public class Finger_identify {
                    activty.sendLogMessageTastContract.sendLog(deviceId,null,uids,bytesToHexString(img),strBeginDate,score[0]+"","验证失败");
                return null;
            }
+       }else {
+           i=0;
+           Cursor cursor1;
+           sql="select UID,FEATURE from  PERSON";
+           cursor1 = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
+           Logger.e("finger_identify"+"cursor1.getCount()"+cursor1.getCount());
+           feature=new byte[cursor1.getCount()][];
+           Uids=new String[cursor1.getCount()];
+           while (cursor1.moveToNext()){
+               int nameColumnIndex = cursor1.getColumnIndex("FEATURE");
+               String strValue=cursor1.getString(nameColumnIndex);
+               feature[i]=hexStringToByte(strValue);
+               Uids[i]=cursor1.getString(cursor1.getColumnIndex("UID"));
+               i++;
+           }
+           len = 0;
+           // 计算一维数组长度
+           if(feature.length>0) {
+               for (byte[] element : feature) {
+                   len += element.length;
+               }
+               // 复制元素
+              byte[] nFeatuer = new byte[len];
+              int index = 0;
+               for (byte[] element : feature) {
+                   for (byte element2 : element) {
+                       nFeatuer[index++] = element2;
+                   }
+               }
+              Logger.e("finger_identify"+"nFeatuer.length"+nFeatuer.length);
+              boolean identifyResult = activty.microFingerVein.fv_index(nFeatuer, nFeatuer.length / 3352, img, pos, score);//比对是否通过
+              identifyResult = identifyResult && score[0] > IDENTIFY_SCORE_THRESHOLD;//得分是否达标
+              Logger.e("finger_identify"+"pos"+pos[0]+"score"+score[0]);
+           }
+           return null;
+       }
    }
 }

@@ -99,6 +99,7 @@ public class WelcomeActivity extends Activity {
         }
     };
     public void getHome(){
+        Logger.e("WelcomeActivity"+"=====getHome====");
         Intent intent = new Intent(WelcomeActivity.this, LockActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);

@@ -307,6 +307,8 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         if (resultResponse.getData().size()>0){
             personDao.insertInTx(resultResponse.getData());
         }
+        List<Person>lsit=personDao.loadAll();
+        Logger.e("BaseApplication+++++listcount:"+lsit.size());
 
     }
     @Override
@@ -732,5 +734,4 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         void finish();
         void start();
     }
-
 }
