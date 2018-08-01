@@ -33,6 +33,7 @@ import com.iflytek.cloud.SpeechUtility;
 import com.link.cloud.base.ApiException;
 import com.link.cloud.base.BaseService;
 import com.link.cloud.base.LogcatHelper;
+import com.link.cloud.bean.BindFaceMes;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.PagesInfoBean;
@@ -639,11 +640,12 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
             downloadFeature.download(messageId,appid,shopId,deviceID,uid);
 //            syncUserFeature.syncUser(FileUtils.loadDataFromFile(getContext(),"deviceId.text"));
         }
-        if("10".equals(pushMessage))
-     Logger.e(pushMessage.getType()+"");
-//                SharedPreferences userInfo = getContext().getSharedPreferences("user_info",0);
-//                deviceID=userInfo.getString("deviceId", "");
-//                downloadFeature.download(messageId,appid,shopId,deviceID,uid);
+        if("10".equals(pushMessage.getType())){
+            Gson gson = new Gson();
+            BindFaceMes bindFaceMes = gson.fromJson(text, BindFaceMes.class);
+            DownLoad.download(bindFaceMes.getFaceUrl(),bindFaceMes.getUid());
+        }
+
     }
     private static String  appid,shopId,uid,sendTime,messageId;
     static JSONObject  object;

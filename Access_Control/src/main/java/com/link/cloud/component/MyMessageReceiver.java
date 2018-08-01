@@ -75,18 +75,7 @@ public class MyMessageReceiver extends MessageReceiver  {
     @Override
     public void onMessage(Context context, CPushMessage cPushMessage) {
         Log.i(REC_TAG,"收到一条推送消息 ： " + cPushMessage.getTitle() + ", content:" + cPushMessage.getContent());
-
-        switch (cPushMessage.getTitle()){
-            case "绑定数据推送":
-                BaseApplication.setConsoleText(cPushMessage.getContent());
-                break;
-            case "绑定人脸数据推送":
-                Gson gson = new Gson();
-                BindFaceMes bindFaceMes = gson.fromJson(cPushMessage.getContent(), BindFaceMes.class);
-                DownLoad.download(bindFaceMes.getFaceUrl(),bindFaceMes.getUid());
-                break;
-
-        }
+        BaseApplication.setConsoleText(cPushMessage.getContent());
     }
 
     private void tojoson(String joson){

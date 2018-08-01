@@ -409,6 +409,7 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
                     if (state == 1 || state == 2) {
                         continue;
                     } else if (state == 3) {
+
                     }
 
                     byte[] img= MdFvHelper.tryGetFirstBestImg(microFingerVein,0,5);
@@ -583,7 +584,6 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
         mWidth = 640;
         mHeight = 480;
         mFormat = ImageFormat.NV21;
-        mHandler = new Handler();
         SharedPreferences userInfo=getSharedPreferences("user_info",0);
         String repwd = userInfo.getString("devicepwd","");
         if(TextUtils.isEmpty(repwd)){
@@ -1061,7 +1061,6 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
     }
     @Override
     protected void onDestroy() {
-        unregisterReceiver(mesReceiver);
         Logger.e("LockActivity"+"onDestroy");
 //        TTSUtils.getInstance().release();
         if(usbDevConn==null){
@@ -1093,7 +1092,6 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
     private CameraSurfaceView mSurfaceView;
     private CameraGLSurfaceView mGLSurfaceView;
     private Camera mCamera;
-    public static CallBackValue callBackValue;
     AFT_FSDKVersion version = new AFT_FSDKVersion();
     AFT_FSDKEngine engine = new AFT_FSDKEngine();
     ASAE_FSDKVersion mAgeVersion = new ASAE_FSDKVersion();
@@ -1101,8 +1099,6 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
     ASGE_FSDKVersion mGenderVersion = new ASGE_FSDKVersion();
     ASGE_FSDKEngine mGenderEngine = new ASGE_FSDKEngine();
     List<AFT_FSDKFace> result = new ArrayList<>();
-    List<ASAE_FSDKAge> ages = new ArrayList<>();
-    List<ASGE_FSDKGender> genders = new ArrayList<>();
     private int mWidth, mHeight, mFormat;
     int mCameraID;
     int mCameraRotate;
@@ -1110,20 +1106,6 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
     byte[] mImageNV21 = null;
     FRAbsLoop mFRAbsLoop = null;
     AFT_FSDKFace mAFT_FSDKFace = null;
-    Handler mHandler;
-    boolean isPostted = false;
-
-    Runnable hide = new Runnable() {
-        @Override
-        public void run() {
-            isPostted = false;
-        }
-    };
-
-
-
-
-
     class FRAbsLoop extends AbsLoop {
         AFR_FSDKVersion version = new AFR_FSDKVersion();
         AFR_FSDKEngine engine = new AFR_FSDKEngine();
@@ -1157,7 +1139,7 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
 
                         }
                     }
-                    if (max > 0.57f) {
+                    if (max > 0.60f) {
                         SharedPreferences userInfo = getSharedPreferences("user_info", 0);
                         long secondTime = System.currentTimeMillis();
                         if (secondTime - firstTime > 3000) {
@@ -1204,7 +1186,6 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
     }
 
 private long firstTime=0;
-
     int recindex = 0;
 
     @Override
@@ -1265,21 +1246,15 @@ private long firstTime=0;
                 mAFT_FSDKFace = result.get(0).clone();
                 mImageNV21 = data.clone();
             } else {
-                if (!isPostted) {
-                    mHandler.removeCallbacks(hide);
-                    mHandler.postDelayed(hide, 2000);
-                    isPostted = true;
-                }
+
             }
         }
-        //copy rects
+
         Rect[] rects = new Rect[result.size()];
         for (int i = 0; i < result.size(); i++) {
             rects[i] = new Rect(result.get(i).getRect());
         }
-        //clear result.
         result.clear();
-        //return the rects for render.
         return rects;
     }
 

@@ -46,6 +46,7 @@ import com.link.cloud.activity.LockActivity;
 import com.link.cloud.activity.MainActivity;
 import com.link.cloud.base.ApiException;
 import com.link.cloud.base.LogcatHelper;
+import com.link.cloud.bean.BindFaceMes;
 import com.link.cloud.bean.CabinetNumberData;
 import com.link.cloud.bean.CabinetNumberMessage;
 import com.link.cloud.bean.DeviceData;
@@ -714,6 +715,10 @@ ConnectivityManager connectivityManager;
         } else if ("9".equals(pushMessage.getType())) {
             String sql="INSERT INTO SIGN_USER (USER_ID) VALUES (\""+pushMessage.getUid()+"\"\n"+")";
             BaseApplication.getInstances().getDaoSession().getDatabase().execSQL(sql);
+        }else if("10".equals(pushMessage.getType())){
+            Gson gson = new Gson();
+            BindFaceMes bindFaceMes = gson.fromJson(text, BindFaceMes.class);
+            DownLoad.download(bindFaceMes.getFaceUrl(),bindFaceMes.getUid());
         }
     }
     public static PushMessage toJsonArray(String json) {
