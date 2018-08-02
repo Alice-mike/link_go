@@ -128,17 +128,15 @@
             android:orientation="vertical"
             android:layout_gravity="center">
     <LinearLayout
-
-    android:layout_width="match_parent"
+    android:layout_marginTop="40px"
+    android:layout_width="280px"
     android:layout_height="80px"
     android:layout_gravity="center"
-        android:orientation="horizontal"
     android:gravity="center">
             <Button
                 android:background="@drawable/main_botton"
                 android:id="@+id/bt_main_bind"
-                android:layout_width="0dp"
-                android:layout_weight="1"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="添加指静脉手指"
                 android:textColor="#ffffff"
@@ -149,25 +147,8 @@
                 android:paddingRight="5dp"
                 android:paddingBottom="5dp"
                 android:gravity="center"/>
-        <Button
-            android:layout_marginLeft="20dp"
-            android:background="@drawable/main_botton"
-            android:id="@+id/bt_main_bind_face"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="添加人脸识别"
-            android:textColor="#ffffff"
-            android:textStyle="bold"
-            android:textSize="25sp"
-            android:paddingLeft="5dp"
-            android:paddingTop="5dp"
-            android:paddingRight="5dp"
-            android:paddingBottom="5dp"
-            android:gravity="center"/>
     </LinearLayout>
     <RelativeLayout
-        android:layout_marginTop="40px"
         android:layout_width="wrap_content"
         android:layout_height="100px">
         <TextView

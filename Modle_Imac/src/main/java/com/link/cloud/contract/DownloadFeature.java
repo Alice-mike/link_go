@@ -6,7 +6,6 @@ import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.SyncFeaturesPage;
-import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.core.BasePresenter;
 import com.link.cloud.core.MvpView;
@@ -26,7 +25,6 @@ public class DownloadFeature extends BasePresenter<DownloadFeature.download> {
         void downloadSuccess(DownLoadData resultResponse);
         void downloadNotReceiver(DownLoadData resultResponse);
         void downloadApK(UpDateBean resultResponse);
-        void syncUserFacePagesSuccess(SyncUserFace resultResponse);
     }
     public ReservoirUtils reservoirUtils;
 
@@ -181,36 +179,6 @@ public class DownloadFeature extends BasePresenter<DownloadFeature.download> {
                     public void onNext(PagesInfoBean resultResponse) {
 //                        Logger.e("VersoinUpdateContract"+deviceData.toString());
                         DownloadFeature.this.getMvpView().getPagesInfo(resultResponse);
-                    }
-                }));
-    }
-    public void syncUserFacePages(String deviceId){
-        this.mCompositeSubscription.add(this.mDataManager.syncUserFacePages(deviceId)
-                .subscribe(new AbsAPICallback<SyncUserFace>() {
-                    @Override
-                    public void onCompleted() {
-                        if (DownloadFeature.this.mCompositeSubscription != null)
-                            DownloadFeature.this.mCompositeSubscription.remove(this);
-                    }
-                    @Override
-                    protected void onError(ApiException e) {
-//                        Logger.e("VersoinUpdateContract onError"+e.getMessage());
-                        DownloadFeature.this.getMvpView().onError(e);
-                    }
-                    @Override
-                    protected void onPermissionError(ApiException e) {
-                        Logger.e("VersoinUpdateContract onPermissionError"+e.getMessage());
-                        DownloadFeature.this.getMvpView().onPermissionError(e);
-                    }
-                    @Override
-                    protected void onResultError(ApiException e) {
-                        Logger.e("VersoinUpdateContract onResultError"+e.getMessage());
-                        DownloadFeature.this.getMvpView().onResultError(e);
-                    }
-                    @Override
-                    public void onNext(SyncUserFace resultResponse) {
-//                        Logger.e("VersoinUpdateContract"+deviceData.toString());
-                        DownloadFeature.this.getMvpView().syncUserFacePagesSuccess(resultResponse);
                     }
                 }));
     }

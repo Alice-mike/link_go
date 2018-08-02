@@ -9,7 +9,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.view.LayoutInflater;
@@ -26,7 +25,6 @@ import android.widget.Toast;
 
 import com.link.cloud.BuildConfig;
 import com.link.cloud.R;
-import com.link.cloud.bean.FaceBindBean;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.BaseApplication;
 
@@ -191,7 +189,6 @@ public class RegisterFragment_One extends BaseFragment implements RegisterTaskCo
     protected void initListeners() {
         this.presenter = new RegisterTaskContract();
         this.presenter.attachView(this);
-
     }
 
     @Override
@@ -223,11 +220,6 @@ public class RegisterFragment_One extends BaseFragment implements RegisterTaskCo
             this.showProgress(false, false, "接口成功回调，但是没有返回用户信息");
         }
     }
-
-    public void onBindFaceSuccess(FaceBindBean faceBindBean) {
-        Logger.e("success");
-    }
-
     @Override
     public void onError(ApiException e) {
         super.onError(e);

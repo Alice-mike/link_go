@@ -16,7 +16,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.os.SystemClock;
 import android.support.multidex.MultiDex;
 import android.support.multidex.MultiDexApplication;
 import android.util.Log;
@@ -33,13 +32,11 @@ import com.iflytek.cloud.SpeechUtility;
 import com.link.cloud.base.ApiException;
 import com.link.cloud.base.BaseService;
 import com.link.cloud.base.LogcatHelper;
-import com.link.cloud.bean.BindFaceMes;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.PushMessage;
 import com.link.cloud.bean.SyncFeaturesPage;
-import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.contract.DownloadFeature;
 import com.link.cloud.contract.GetDeviceIDContract;
@@ -51,9 +48,7 @@ import com.link.cloud.greendaodemo.HMROpenHelper;
 import com.link.cloud.greendaodemo.Person;
 import com.link.cloud.message.CrashHandler;
 import com.link.cloud.message.FileUtil;
-import com.link.cloud.utils.DownLoad;
 import com.link.cloud.utils.DownloadUtils;
-import com.link.cloud.utils.FaceDB;
 import com.link.cloud.utils.FileUtils;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.activity.NewMainActivity;
@@ -70,10 +65,6 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 /**
  * Description：BaseApplication
  * Created by Shaozy on 2016/8/10.
@@ -104,7 +95,6 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     public static BaseApplication instances;
     static DownloadFeature downloadFeature;
     static boolean ret = false;
-    public FaceDB mFaceDB;
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
@@ -127,7 +117,7 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         instances = this;
         ourInstance = this;
          context=getApplicationContext();
-        mFaceDB = new FaceDB(Environment.getExternalStorageDirectory().getAbsolutePath() + "/faceFile");
+
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override
             public void onActivityCreated(Activity activity, Bundle bundle) {
@@ -472,23 +462,6 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         }
         Logger.e(resultResponse.getMsg()+resultResponse.getData().getPackage_path());
     }
-
-    @Override
-    public void syncUserFacePagesSuccess(SyncUserFace resultResponse) {
-        ExecutorService service = Executors.newFixedThreadPool(8);
-        for(int x =0;x<resultResponse.getData().size();x++){
-
-            int finalX = x;
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    DownLoad.download(resultResponse.getData().get(finalX).getFaceUrl(),resultResponse.getData().get(finalX).getUid());
-                }
-            };
-            service.execute(runnable);
-        }
-    }
-
     private void downLoadApk(String downloadurl) {
         // 判断当前用户是否有sd卡
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
@@ -578,7 +551,18 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
 
     @Override
     public void downloadSuccess(DownLoadData resultResponse) {
-
+        if (resultResponse.getData().size()>0) {
+            PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
+//            String sql="delete from PERSON where Uid ="+resultResponse.getData().get(0).getUid();
+//            QueryBuilder queryBuilder=personDao.queryBuilder();
+//            Cursor cursor=
+            if (resultResponse.getData().size() > 0) {
+                personDao.insertInTx(resultResponse.getData());
+            }
+            List<Person> lsit = personDao.loadAll();
+            Logger.e("BaseApplication+++++listcount:"+lsit.size());
+        }else {
+        }
     }
     class ResultData<T>{
         T data;
@@ -590,10 +574,7 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
        Logger.e("BaseApplication+devicedate"+deviceData.getDeviceData().getDeviceId()+"numberType"+deviceData.getDeviceData().getNumberType());
             SharedPreferences userInfo = getSharedPreferences("user_info",0);
             if (!"".equals(deviceData.getDeviceData().getDeviceId())){
-
                 userInfo.edit().putString("deviceId", deviceData.getDeviceData().getDeviceId()).commit();
-                downloadFeature.syncUserFacePages(deviceData.getDeviceData().getDeviceId());
-               // userInfo.edit().putString("deviceId", "1000UVL4LKR").commit();
                 }
                 userInfo.edit().putInt("numberType",deviceData.getDeviceData().getNumberType()).commit();
                 FileUtils.saveDataToFile(getContext(),deviceData.getDeviceData().getDeviceId(),"deviceId.text");
@@ -640,12 +621,9 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
             downloadFeature.download(messageId,appid,shopId,deviceID,uid);
 //            syncUserFeature.syncUser(FileUtils.loadDataFromFile(getContext(),"deviceId.text"));
         }
-        if("10".equals(pushMessage.getType())){
-            Gson gson = new Gson();
-            BindFaceMes bindFaceMes = gson.fromJson(text, BindFaceMes.class);
-            DownLoad.download(bindFaceMes.getFaceUrl(),bindFaceMes.getUid());
-        }
-
+//                SharedPreferences userInfo = getContext().getSharedPreferences("user_info",0);
+//                deviceID=userInfo.getString("deviceId", "");
+//                downloadFeature.download(messageId,appid,shopId,deviceID,uid);
     }
     private static String  appid,shopId,uid,sendTime,messageId;
     static JSONObject  object;

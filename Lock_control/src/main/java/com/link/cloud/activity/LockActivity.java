@@ -227,7 +227,9 @@ public class LockActivity extends BaseAppCompatActivity implements SendLogMessag
             Log.e(TAG,"bind MdUsbService failed,can't get microFingerVein object.");
             handler.removeCallbacksAndMessages(null);
             finish();
+        }else {
         }
+
     }
     /**
      * 初始化监听。

@@ -1,6 +1,5 @@
 
 package com.link.cloud;
-import android.Manifest;
 import android.app.Activity;
 
 import android.content.Context;
@@ -8,25 +7,19 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.multidex.MultiDex;
 import android.support.multidex.MultiDexApplication;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.sdk.android.push.CloudPushService;
 import com.alibaba.sdk.android.push.CommonCallback;
 import com.alibaba.sdk.android.push.noonesdk.PushServiceFactory;
@@ -34,38 +27,24 @@ import com.anupcowkur.reservoir.Reservoir;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
 import com.iflytek.cloud.SpeechConstant;
-import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SpeechUtility;
-import com.iflytek.cloud.SynthesizerListener;
-import com.iflytek.cloud.util.ResourceUtil;
 import com.link.cloud.activity.LockActivity;
-import com.link.cloud.activity.MainActivity;
 import com.link.cloud.base.ApiException;
-import com.link.cloud.base.LogcatHelper;
-import com.link.cloud.bean.BindFaceMes;
-import com.link.cloud.bean.CabinetNumberData;
-import com.link.cloud.bean.CabinetNumberMessage;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
-import com.link.cloud.bean.Member;
-import com.link.cloud.bean.MessagetoJson;
 import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.PushMessage;
 import com.link.cloud.bean.Sign_data;
 import com.link.cloud.bean.SyncFeaturesPage;
-import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
-import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.component.MyMessageReceiver;
 import com.link.cloud.contract.CabinetNumberContract;
 import com.link.cloud.contract.DownloadFeature;
 import com.link.cloud.contract.GetDeviceIDContract;
 import com.link.cloud.contract.SyncUserFeature;
-import com.link.cloud.contract.VersoinUpdateContract;
 //import com.link.cloud.greendao.gen.DaoMaster;
 //import com.link.cloud.greendao.gen.DaoSession;
 //import com.link.cloud.greendaodemo.HMROpenHelper;
@@ -75,16 +54,9 @@ import com.link.cloud.greendao.gen.DaoSession;
 import com.link.cloud.greendao.gen.PersonDao;
 
 import com.link.cloud.greendao.gen.SignUserDao;
-import com.link.cloud.greendaodemo.HMROpenHelper;
 import com.link.cloud.greendaodemo.Person;
-import com.link.cloud.greendaodemo.SignUser;
-import com.link.cloud.message.CrashHandler;
-import com.link.cloud.setting.TtsSettings;
-import com.link.cloud.utils.DownLoad;
 import com.link.cloud.utils.DownloadUtils;
-import com.link.cloud.utils.FaceDB;
 import com.link.cloud.utils.FileUtils;
-import com.link.cloud.view.ProgressHUD;
 import com.orhanobut.logger.Logger;
 
 import com.link.cloud.constant.Constant;
@@ -92,27 +64,19 @@ import com.link.cloud.utils.Utils;
 import com.tencent.bugly.crashreport.CrashReport;
 import com.umeng.analytics.MobclickAgent;
 
-import org.greenrobot.greendao.query.QueryBuilder;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.xml.transform.Result;
-
 import md.com.sdk.MicroFingerVein;
 
-import static com.link.cloud.utils.Utils.byte2hex;
 /**
  * Description：BaseApplication
  * Created by Shaozy on 2016/8/10.
@@ -148,7 +112,6 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     MicroFingerVein microFingerVein;
     MyMessageReceiver receiver;
     SharedPreferences mSharedPreferences;
-    public FaceDB mFaceDB;
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
@@ -170,7 +133,7 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         instances = this;
         ourInstance = this;
         setDatabase();
-        mFaceDB = new FaceDB(Environment.getExternalStorageDirectory().getAbsolutePath() + "/faceFile");
+
          context=getApplicationContext();
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override
@@ -351,23 +314,6 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         }
         Logger.e(resultResponse.getMsg()+resultResponse.getData().getPackage_path());
     }
-
-    @Override
-    public void syncUserFacePagesSuccess(SyncUserFace resultResponse) {
-        ExecutorService service = Executors.newFixedThreadPool(8);
-        for(int x =0;x<resultResponse.getData().size();x++){
-
-            int finalX = x;
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    DownLoad.download(resultResponse.getData().get(finalX).getFaceUrl(),resultResponse.getData().get(finalX).getUid());
-                }
-            };
-            service.execute(runnable);
-        }
-    }
-
     private void downLoadApk(String downloadurl) {
         // 判断当前用户是否有sd卡
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
@@ -396,15 +342,9 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     @Override
     public void downloadSuccess(DownLoadData resultResponse) {
         PersonDao personDao=BaseApplication.getInstances().getDaoSession().getPersonDao();
-        Log.e("downloadSuccess: ",  resultResponse.getData().size()+"" );
-        List<Person> people = personDao.loadAll();
-        Log.e("downloadSuccess: ",  people.size()+"" );
         if (resultResponse.getData().size()>0){
             personDao.insertInTx(resultResponse.getData());
         }
-        List<Person> people2 = personDao.loadAll();
-        Log.e("downloadSuccess: ",  people2.size()+"" );
-
     }
     @Override
     public void downloadNotReceiver(DownLoadData resultResponse) {
@@ -567,50 +507,33 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
         }
     }
     ArrayList<Person> SyncFeaturesPages = new ArrayList<>();
-    int totalPage=0,currentPage=0,downloadPage=0;
+    int totalPage=0,currentPage=1,downloadPage=0;
     @Override
     public void getPagesInfo(PagesInfoBean resultResponse) {
-        if (resultResponse.getData().getCount()>0) {
-            totalPage = resultResponse.getData().getPageCount();
-            for (int x = 0; x < 8; x++) {
-                if (x > totalPage - 1) {
-                    return;
+        totalPage = resultResponse.getData().getPageCount();
+        ExecutorService service = Executors.newFixedThreadPool(8);
+        for(int x =0 ;x<resultResponse.getData().getPageCount();x++){
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    feature.syncUserFeaturePages(FileUtils.loadDataFromFile(getContext(), "deviceId.text"), currentPage++);
                 }
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        currentPage++;
-                        Logger.e(currentPage + "currentPage");
-                        feature.syncUserFeaturePages(FileUtils.loadDataFromFile(getContext(), "deviceId.text"), currentPage);
-                    }
-                }).start();
-            }
-        }else {
-            if (downLoadListner != null) {
-                downLoadListner.finish();
-            }
+            };
+            service.execute(runnable);
         }
+
     }
 
     @Override
     public void syncUserFeaturePagesSuccess(SyncFeaturesPage resultResponse) {
         if (resultResponse.getData().size()>0) {
             downloadPage++;
-            Logger.e(downloadPage + "downloadPage");
-            if (totalPage > 8 && currentPage < totalPage) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        currentPage++;
-                        Logger.e(currentPage + "currentPage");
-                        feature.syncUserFeaturePages(FileUtils.loadDataFromFile(getContext(), "deviceId.text"), currentPage);
-                    }
-                }).start();
-            }
+            Logger.e(resultResponse.getData().size() + getResources().getString(R.string.syn_data)+"current");
             SyncFeaturesPages.addAll(resultResponse.getData());
+            Logger.e(SyncFeaturesPages.size() + getResources().getString(R.string.syn_data)+"total");
             if (downloadPage == totalPage) {
                 PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
-                personDao.insertInTx(resultResponse.getData());
+                personDao.insertInTx(SyncFeaturesPages);
                 Logger.e(SyncFeaturesPages.size() + getResources().getString(R.string.syn_data));
                 NetworkInfo info = connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
                 if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
@@ -664,8 +587,7 @@ ConnectivityManager connectivityManager;
        Logger.e("BaseApplication+devicedate"+deviceData.getDeviceData().getDeviceId()+"numberType"+deviceData.getDeviceData().getNumberType());
             SharedPreferences userInfo = getSharedPreferences("user_info",MODE_MULTI_PROCESS);
             SharedPreferences.Editor editor=userInfo.edit();
-            editor.putString("deviceId",deviceData.getDeviceData().getDeviceId() );
-            feature.syncUserFacePages(deviceData.getDeviceData().getDeviceId());
+            editor.putString("deviceId", deviceData.getDeviceData().getDeviceId());
             editor.putInt("numberType",deviceData.getDeviceData().getNumberType());
             editor.commit();
             if (!"".equals(deviceData.getDeviceData().getDeviceId())) {
@@ -686,8 +608,8 @@ ConnectivityManager connectivityManager;
                     List<Person> list=personDao.loadAll();
                     if (list.size()==0) {
                         syncUserFeature.syncSign(deviceID);
-                        syncUserFeature.syncUser(deviceID);
-//                        feature.getPagesInfo(deviceID);
+//                        syncUserFeature.syncUser(deviceID);
+                        feature.getPagesInfo(deviceID);
                         handler.sendEmptyMessageDelayed(0,1000);
                         //                        syncUserFeature.syncUser(deviceID);
                     }else {
@@ -715,10 +637,6 @@ ConnectivityManager connectivityManager;
         } else if ("9".equals(pushMessage.getType())) {
             String sql="INSERT INTO SIGN_USER (USER_ID) VALUES (\""+pushMessage.getUid()+"\"\n"+")";
             BaseApplication.getInstances().getDaoSession().getDatabase().execSQL(sql);
-        }else if("10".equals(pushMessage.getType())){
-            Gson gson = new Gson();
-            BindFaceMes bindFaceMes = gson.fromJson(text, BindFaceMes.class);
-            DownLoad.download(bindFaceMes.getFaceUrl(),bindFaceMes.getUid());
         }
     }
     public static PushMessage toJsonArray(String json) {
@@ -740,5 +658,4 @@ ConnectivityManager connectivityManager;
         void finish();
         void start();
     }
-
 }
