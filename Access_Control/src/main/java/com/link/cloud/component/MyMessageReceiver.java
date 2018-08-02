@@ -9,7 +9,11 @@ import com.alibaba.sdk.android.push.CloudPushService;
 import com.alibaba.sdk.android.push.CommonCallback;
 import com.alibaba.sdk.android.push.MessageReceiver;
 import com.alibaba.sdk.android.push.notification.CPushMessage;
+import com.google.gson.Gson;
 import com.link.cloud.BaseApplication;
+import com.link.cloud.bean.BindFaceMes;
+
+import com.link.cloud.utils.DownLoad;
 import com.orhanobut.logger.Logger;
 
 import org.json.JSONArray;

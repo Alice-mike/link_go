@@ -481,4 +481,5 @@ public class WorkService extends AliyunMessageIntentService implements DeviceHea
         Log.i(REC_TAG,"onNotificationReceivedInApp ： " + " : " + title + " : " + summary + "  " + extraMap + " : " + openType + " : " + openActivity + " : " + openUrl);
         BaseApplication.setConsoleText("onNotificationReceivedInApp ： " + " : " + title + " : " + summary);
     }
+
 }

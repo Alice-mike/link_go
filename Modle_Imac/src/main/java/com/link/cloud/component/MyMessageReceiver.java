@@ -6,6 +6,9 @@ import android.util.Log;
 
 import com.alibaba.sdk.android.push.MessageReceiver;
 import com.alibaba.sdk.android.push.notification.CPushMessage;
+import com.google.gson.Gson;
+import com.link.cloud.bean.BindFaceMes;
+import com.link.cloud.utils.DownLoad;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.BaseApplication;
 
@@ -71,18 +74,7 @@ public class MyMessageReceiver extends MessageReceiver {
     @Override
     public void onMessage(Context context, CPushMessage cPushMessage) {
         Log.i(REC_TAG,"收到一条推送消息 ： " + cPushMessage.getTitle() + ", content:" + cPushMessage.getContent());
-        BaseApplication.setConsoleText(cPushMessage.getContent());
-        switch (cPushMessage.getTitle()){
-            case "1":
-                tojoson(cPushMessage.getContent());
-            case "2":
-//                intent = new Intent();
-//                intent.setClass(context,PayActivity.class);
-//                context.startActivity(intent);
-                break;
-
-        }
-    }
+        BaseApplication.setConsoleText(cPushMessage.getContent());    }
     private void tojoson(String joson){
         try {
             JSONArray arr = new JSONArray(joson);

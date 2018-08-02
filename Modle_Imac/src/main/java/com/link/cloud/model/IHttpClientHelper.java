@@ -3,11 +3,13 @@ package com.link.cloud.model;
 import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
+import com.link.cloud.bean.FaceBindBean;
 import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.ResultHeartBeat;
 import com.link.cloud.bean.RetrunLessons;
 import com.link.cloud.bean.SignUserdata;
 import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.bean.Member;
@@ -157,4 +159,6 @@ public interface IHttpClientHelper {
     Observable<PagesInfoBean> getPagesInfo(String deviceId);
     Observable<SyncFeaturesPage> syncUserFeaturePages(String deviceId, int currentPage);
     Observable<Code_Message> checkInByQrCode(String deviceId, String qrcode);
+    Observable<FaceBindBean> bindFace(String deviceID, int numberType, String numberValue, int userType, String path,String faceFile);
+    Observable<SyncUserFace> syncUserFacePages(String deviceID);
 }
