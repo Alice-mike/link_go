@@ -14,6 +14,7 @@ import com.link.cloud.bean.ResultHeartBeat;
 import com.link.cloud.bean.ResultResponse;
 import com.link.cloud.bean.Sign_data;
 import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.bean.UserResponse;
@@ -156,4 +157,5 @@ public interface IHttpClientHelper {
      * @return
      */
     Observable<SyncFeaturesPage> syncUserFeaturePages(String deviceId, int currentPage);
+    Observable<SyncUserFace> syncUserFacePages(String deviceID);
 }

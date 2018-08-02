@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.support.multidex.MultiDex;
 import android.support.multidex.MultiDexApplication;
 import android.util.Log;
@@ -37,6 +38,7 @@ import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.PushMessage;
+import com.link.cloud.bean.PushUpDateBean;
 import com.link.cloud.bean.SyncFeaturesPage;
 import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
@@ -50,7 +52,9 @@ import com.link.cloud.greendaodemo.HMROpenHelper;
 import com.link.cloud.greendaodemo.Person;
 import com.link.cloud.message.CrashHandler;
 import com.link.cloud.message.FileUtil;
+import com.link.cloud.utils.DownLoad;
 import com.link.cloud.utils.DownloadUtils;
+import com.link.cloud.utils.FaceDB;
 import com.link.cloud.utils.FileUtils;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.activity.NewMainActivity;
@@ -67,6 +71,10 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * Description：BaseApplication
  * Created by Shaozy on 2016/8/10.
@@ -571,18 +579,7 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
 
     @Override
     public void downloadSuccess(DownLoadData resultResponse) {
-        if (resultResponse.getData().size()>0) {
-            PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
-//            String sql="delete from PERSON where Uid ="+resultResponse.getData().get(0).getUid();
-//            QueryBuilder queryBuilder=personDao.queryBuilder();
-//            Cursor cursor=
-            if (resultResponse.getData().size() > 0) {
-                personDao.insertInTx(resultResponse.getData());
-            }
-            List<Person> lsit = personDao.loadAll();
-            Logger.e("BaseApplication+++++listcount:"+lsit.size());
-        }else {
-        }
+
     }
     class ResultData<T>{
         T data;

@@ -15,6 +15,7 @@ import com.link.cloud.bean.ResultHeartBeat;
 import com.link.cloud.bean.ResultResponse;
 import com.link.cloud.bean.Sign_data;
 import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.base.RestApi;
@@ -242,5 +243,17 @@ public class HttpClientHelper implements IHttpClientHelper {
             Logger.e("HttpClientHelper"+e.getMessage());
         }
         return BaseApi.getInstance().getBaseService().cabinetNumberList(params);
+    }
+    @Override
+    public Observable<SyncUserFace> syncUserFacePages(String deviceId) {
+        JsonObject params = new JsonObject();
+        try {
+            params.addProperty("deviceId", deviceId);
+
+
+        } catch (Exception e) {
+            Logger.e("HttpClientHelper"+e.getMessage());
+        }
+        return BaseApi.getInstance().getBaseService().syncUserFacePages(params);
     }
 }

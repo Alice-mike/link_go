@@ -25,11 +25,14 @@
 package com.link.cloud;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -37,9 +40,15 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.UiThread;
 import android.support.multidex.MultiDex;
 import android.support.multidex.MultiDexApplication;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -75,8 +84,10 @@ import com.link.cloud.greendao.gen.SignUserDao;
 import com.link.cloud.greendaodemo.CabinetNumber;
 import com.link.cloud.greendaodemo.CabinetRecord;
 import com.link.cloud.greendaodemo.Person;
+import com.link.cloud.greendaodemo.SignUser;
 import com.link.cloud.utils.DownloadUtils;
 import com.link.cloud.utils.FileUtils;
+import com.link.cloud.utils.ToastUtils;
 import com.orhanobut.logger.Logger;
 import com.link.cloud.constant.Constant;
 import com.link.cloud.utils.Utils;
@@ -310,7 +321,6 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
     }
     @Override
     public void syncSignUserSuccess(Sign_data downLoadData) {
-        Logger.e("BaseApplication11111"+downLoadData.getData().size());
         SignUserDao signUserDao=BaseApplication.getInstances().getDaoSession().getSignUserDao();
         if (downLoadData.getData().size()>0){
             signUserDao.deleteAll();
@@ -617,8 +627,8 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
                         if (downLoadListner != null) {
                             downLoadListner.start();
                         }
-//                        syncUserFeature.syncUser(FileUtils.loadDataFromFile(getContext(), "deviceId.text"));
-                        feature.getPagesInfo(FileUtils.loadDataFromFile(getContext(), "deviceId.text"));
+                        syncUserFeature.syncUser(FileUtils.loadDataFromFile(getContext(), "deviceId.text"));
+//                        feature.getPagesInfo(FileUtils.loadDataFromFile(getContext(), "deviceId.text"));
                         }
                     }
                 }else {
@@ -708,7 +718,7 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
             Gson gson = new Gson();
             PushUpDateBean pushUpDateBean = gson.fromJson(text, PushUpDateBean.class);
             int device_type_id = pushUpDateBean.getDevice_type_id();
-            if(device_type_id==4){
+            if(device_type_id==2){
                 if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                     File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "lingxi.apk");
                     if (file.exists()) {

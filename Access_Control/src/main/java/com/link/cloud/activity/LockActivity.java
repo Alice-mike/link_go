@@ -1,5 +1,7 @@
 package com.link.cloud.activity;
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.Dialog;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -9,6 +11,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.hardware.Camera;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
@@ -19,20 +26,55 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
+import android.text.InputType;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.anupcowkur.reservoir.Reservoir;
+import com.arcsoft.ageestimation.ASAE_FSDKAge;
+import com.arcsoft.ageestimation.ASAE_FSDKEngine;
+import com.arcsoft.ageestimation.ASAE_FSDKError;
+import com.arcsoft.ageestimation.ASAE_FSDKVersion;
+import com.arcsoft.facerecognition.AFR_FSDKEngine;
+import com.arcsoft.facerecognition.AFR_FSDKError;
+import com.arcsoft.facerecognition.AFR_FSDKFace;
+import com.arcsoft.facerecognition.AFR_FSDKMatching;
+import com.arcsoft.facerecognition.AFR_FSDKVersion;
+import com.arcsoft.facetracking.AFT_FSDKEngine;
+import com.arcsoft.facetracking.AFT_FSDKError;
+import com.arcsoft.facetracking.AFT_FSDKFace;
+import com.arcsoft.facetracking.AFT_FSDKVersion;
+import com.arcsoft.genderestimation.ASGE_FSDKEngine;
+import com.arcsoft.genderestimation.ASGE_FSDKError;
+import com.arcsoft.genderestimation.ASGE_FSDKGender;
+import com.arcsoft.genderestimation.ASGE_FSDKVersion;
+import com.cloopen.rest.rest.sdk.utils.encoder.BASE64Decoder;
+
+import com.guo.android_extend.java.AbsLoop;
+import com.guo.android_extend.tools.CameraHelper;
+import com.guo.android_extend.widget.CameraFrameData;
+import com.guo.android_extend.widget.CameraGLSurfaceView;
+import com.guo.android_extend.widget.CameraSurfaceView;
+import com.hotelmanager.xzy.util.HotelUtil;
+import com.hotelmanager.xzy.util.OpenDoorUtil;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
 import com.iflytek.cloud.SpeechConstant;
@@ -47,10 +89,16 @@ import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.Lockdata;
 import com.link.cloud.bean.PagesInfoBean;
+import com.link.cloud.bean.PushMessage;
 import com.link.cloud.bean.RestResponse;
 import com.link.cloud.bean.Sign_data;
 import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
+import com.link.cloud.component.EditTextChangeListener;
+import com.link.cloud.constant.Constant;
+import com.link.cloud.contract.AdminopenCabinet;
+import com.link.cloud.contract.ClearCabinetContract;
 import com.link.cloud.contract.DownloadFeature;
 import com.link.cloud.contract.IsopenCabinet;
 import com.link.cloud.contract.SendLogMessageTastContract;
@@ -60,29 +108,42 @@ import com.link.cloud.gpiotest.Gpio;
 import com.link.cloud.greendao.gen.PersonDao;
 import com.link.cloud.greendao.gen.SignUserDao;
 import com.link.cloud.greendaodemo.Person;
+import com.link.cloud.greendaodemo.SignUser;
 import com.link.cloud.message.MessageEvent;
 import com.link.cloud.model.MdFvHelper;
 import com.link.cloud.setting.TtsSettings;
+
 import com.link.cloud.utils.APKVersionCodeUtils;
+import com.link.cloud.utils.FaceDB;
 import com.link.cloud.utils.FileUtils;
 import com.link.cloud.utils.Finger_identify;
+import com.link.cloud.utils.ToastUtils;
+import com.link.cloud.utils.Utils;
 import com.link.cloud.view.ExitAlertDialog;
 import com.orhanobut.logger.Logger;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.greenrobot.greendao.query.QueryBuilder;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import butterknife.Bind;
 import butterknife.OnClick;
 import md.com.sdk.MicroFingerVein;
 
+import static com.alibaba.sdk.android.ams.common.util.HexUtil.hexStringToByte;
 /**
  * Created by 30541 on 2018/3/12.
  */
-public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet.isopen,SyncUserFeature.syncUser,SendLogMessageTastContract.sendLog,DownloadFeature.download{
+public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet.isopen,SyncUserFeature.syncUser,SendLogMessageTastContract.sendLog,DownloadFeature.download,CameraSurfaceView.OnCameraListener, View.OnTouchListener, Camera.AutoFocusCallback{
     @Bind(R.id.head_text_01)
     TextView head_text_01;
     @Bind(R.id.head_text_02)
@@ -348,6 +409,7 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
                     if (state == 1 || state == 2) {
                         continue;
                     } else if (state == 3) {
+
                     }
 
                     byte[] img= MdFvHelper.tryGetFirstBestImg(microFingerVein,0,5);
@@ -425,10 +487,141 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
         }
         isopen++;
     }
+    String  pwdmodel ="1";
+    private class ExitAlertDialog1 extends Dialog implements View.OnClickListener {
+        private Context mContext;
+        private EditText etPwd;
+        private Button btCancel;
+        private Button btConfirm;
+        private TextView texttilt;
+        public ExitAlertDialog1(Context context, int theme) {
+            super(context, theme);
+            mContext = context;
+            initDialog();
+        }
+        public ExitAlertDialog1(Context context) {
+            super(context, R.style.customer_dialog);
+            mContext = context;
+            initDialog();
+        }
+        private void initDialog() {
+            View view = LayoutInflater.from(mContext).inflate(R.layout.dialog_exit_confirm, null);
+            setContentView(view);
+            btCancel = (Button) view.findViewById(R.id.btCancel);
+            btConfirm = (Button) view.findViewById(R.id.btConfirm);
+            etPwd = (EditText) view.findViewById(R.id.deviceCode);
+            texttilt=(TextView)view.findViewById(R.id.text_title);
+            btCancel.setOnClickListener(this);
+            btConfirm.setOnClickListener(this);
+        }
+        @Override
+        public void show() {
+            etPwd.setText("");
+            if (pwdmodel=="1"){
+            }else if (pwdmodel=="2"){
+                texttilt.setText(R.string.chang_pwd);
+                etPwd.setHint(getResources().getString(R.string.put_new_pwd));
+            }
+            super.show();
+        }
+        String devicepwd;
+        SharedPreferences userInfo;
+        Intent intent;
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.btCancel:
+                    this.dismiss();
+                    break;
+                case R.id.btConfirm:
+                    etPwd.setInputType(InputType.TYPE_NULL);
+                    if(pwdmodel.equals("1")){
+                        String pwd = etPwd.getText().toString().trim();
+                        if (Utils.isEmpty(pwd)) {
+                            ToastUtils.show(mContext, getResources().getString(R.string.put_pwd), ToastUtils.LENGTH_SHORT);
+                            return;
+                        }
+                        String repwd;
+                        try {
+                            repwd = Reservoir.get(Constant.KEY_PASSWORD, String.class);
+                        } catch (Exception e) {
+                            userInfo=getSharedPreferences("user_info",0);
+                            repwd = userInfo.getString("devicepwd","0");
+                        }
+                        if (!pwd.equals(repwd)) {
+                            ToastUtils.show(mContext, getResources().getString(R.string.error_password), ToastUtils.LENGTH_SHORT);
+                            return;
+                        }else {
+                            userInfo = getSharedPreferences("user_info", 0);
+                            userInfo.edit().putString("devicepwd", pwd).commit();
+                            mGLSurfaceView.setVisibility(View.INVISIBLE);
+                            setting_ll.setVisibility(View.VISIBLE);
+                            this.dismiss();
+                        }
+                    }else if (pwdmodel.equals("2")){
+                        userInfo=getSharedPreferences("user_info",0);
+                        String pwd = etPwd.getText().toString().trim();
+                        if (userInfo.getString("devicepwd","").toString().trim()==pwd) {
+                            ToastUtils.show(mContext, getResources().getString(R.string.same_pwd), ToastUtils.LENGTH_SHORT);
+                        }else {
+                            userInfo.edit().putString("devicepwd",pwd).commit();
+                            ToastUtils.show(mContext, getResources().getString(R.string.chang_pwd_successful), ToastUtils.LENGTH_SHORT);
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+    ExitAlertDialog1 exitAlertDialog1;
     //认证一个手指模板,当比对成功且得分大于自定义认证阈值时返回true，否则返回false;
-
+    LinearLayout setting_ll;
     @Override
     protected void initViews(Bundle savedInstanceState) {
+        // TODO Auto-generated method stub
+        mCameraID = getIntent().getIntExtra("Camera", 0) == 0 ? Camera.CameraInfo.CAMERA_FACING_FRONT : Camera.CameraInfo.CAMERA_FACING_BACK;
+        mCameraRotate = 0;
+        mCameraMirror = false;
+        mWidth = 640;
+        mHeight = 480;
+        mFormat = ImageFormat.NV21;
+        SharedPreferences userInfo=getSharedPreferences("user_info",0);
+        String repwd = userInfo.getString("devicepwd","");
+        if(TextUtils.isEmpty(repwd)){
+            userInfo.edit().putString("devicepwd","666666").commit();
+        }
+        mGLSurfaceView = (CameraGLSurfaceView) findViewById(R.id.glsurfaceView);
+        mGLSurfaceView.setOnTouchListener(this);
+        mSurfaceView = (CameraSurfaceView) findViewById(R.id.surfaceView);
+        setting_ll = (LinearLayout) findViewById(R.id.setting_ll);
+        mSurfaceView.setOnCameraListener(this);
+        findViewById(R.id.versionName).setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                pwdmodel="1";
+                exitAlertDialog1=new ExitAlertDialog1(LockActivity.this);
+                exitAlertDialog1.show();
+                return true;
+            }
+        });
+        mSurfaceView.setupGLSurafceView(mGLSurfaceView, true, mCameraMirror, mCameraRotate);
+        mSurfaceView.debug_print_fps(true, false);
+        AFT_FSDKError err = engine.AFT_FSDK_InitialFaceEngine(FaceDB.appid, FaceDB.ft_key, AFT_FSDKEngine.AFT_OPF_0_HIGHER_EXT, 16, 5);
+        Log.d(TAG, "AFT_FSDK_InitialFaceEngine =" + err.getCode());
+        err = engine.AFT_FSDK_GetVersion(version);
+        Log.d(TAG, "AFT_FSDK_GetVersion:" + version.toString() + "," + err.getCode());
+
+        ASAE_FSDKError error = mAgeEngine.ASAE_FSDK_InitAgeEngine(FaceDB.appid, FaceDB.ag_key);
+        Log.d(TAG, "ASAE_FSDK_InitAgeEngine =" + error.getCode());
+        error = mAgeEngine.ASAE_FSDK_GetVersion(mAgeVersion);
+        Log.d(TAG, "ASAE_FSDK_GetVersion:" + mAgeVersion.toString() + "," + error.getCode());
+
+        ASGE_FSDKError error1 = mGenderEngine.ASGE_FSDK_InitgGenderEngine(FaceDB.appid, FaceDB.sx_key);
+        Log.d(TAG, "ASGE_FSDK_InitgGenderEngine =" + error1.getCode());
+        error1 = mGenderEngine.ASGE_FSDK_GetVersion(mGenderVersion);
+        Log.d(TAG, "ASGE_FSDK_GetVersion:" + mGenderVersion.toString() + "," + error1.getCode());
+        ((BaseApplication) getApplicationContext().getApplicationContext()).mFaceDB.loadFaces();
+        mFRAbsLoop = new FRAbsLoop();
+        mFRAbsLoop.start();
     }
     @Override
     protected void initListeners() {
@@ -523,7 +716,7 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
         }
     };
     ConnectivityManager connectivityManager;
-    @OnClick({ R.id.button02, R.id.button1, R.id.button2, R.id.button3, R.id.button4,R.id.button5, R.id.head_text_02})
+    @OnClick({ R.id.button02, R.id.button1, R.id.button2, R.id.button3, R.id.button4,R.id.button5,R.id.button6, R.id.button7,R.id.head_text_02})
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.button02:
@@ -555,9 +748,9 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
                 if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
                     exitAlertDialog.show();
                     deviceId=userinfo.getString("deviceId","");
-                    downloadFeature.getPagesInfo(deviceId);
+//                    downloadFeature.getPagesInfo(deviceId);
                     syncUserFeature.syncUser(deviceId);
-//                    syncUserFeature.syncSign(deviceId);
+                    syncUserFeature.syncSign(deviceId);
                 }else {
                     mTts.startSpeaking(getResources().getString(R.string.network_error),mTtsListener);
                     Toast.makeText(this, getResources().getString(R.string.network_error), Toast.LENGTH_LONG).show();
@@ -569,6 +762,15 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
                 intent.setAction(Intent.ACTION_MAIN);// "android.intent.action.MAIN"
                 intent.addCategory(Intent.CATEGORY_HOME); //"android.intent.category.HOME"
                 startActivity(intent);
+                break;
+                case R.id.button6:
+                    mGLSurfaceView.setVisibility(View.VISIBLE);
+                    setting_ll.setVisibility(View.INVISIBLE);
+                break;
+                case R.id.button7:
+                    pwdmodel="2";
+                    exitAlertDialog1=new ExitAlertDialog1(LockActivity.this);
+                    exitAlertDialog1.show();
                 break;
             default:
                 break;
@@ -647,6 +849,11 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
 
     @Override
     public void downloadApK(UpDateBean resultResponse) {
+
+    }
+
+    @Override
+    public void syncUserFacePagesSuccess(SyncUserFace resultResponse) {
 
     }
 
@@ -854,7 +1061,6 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
     }
     @Override
     protected void onDestroy() {
-        unregisterReceiver(mesReceiver);
         Logger.e("LockActivity"+"onDestroy");
 //        TTSUtils.getInstance().release();
         if(usbDevConn==null){
@@ -868,7 +1074,211 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
         }
         EventBus.getDefault().unregister(this);
         unbindService(mdSrvConn);
+        mFRAbsLoop.shutdown();
+        AFT_FSDKError err = engine.AFT_FSDK_UninitialFaceEngine();
+        Log.d(TAG, "AFT_FSDK_UninitialFaceEngine =" + err.getCode());
+
+        ASAE_FSDKError err1 = mAgeEngine.ASAE_FSDK_UninitAgeEngine();
+        Log.d(TAG, "ASAE_FSDK_UninitAgeEngine =" + err1.getCode());
+        unregisterReceiver(mesReceiver);
+        ASGE_FSDKError err2 = mGenderEngine.ASGE_FSDK_UninitGenderEngine();
+        Log.d(TAG, "ASGE_FSDK_UninitGenderEngine =" + err2.getCode());
         super.onDestroy();
 
     }
+
+
+
+    private CameraSurfaceView mSurfaceView;
+    private CameraGLSurfaceView mGLSurfaceView;
+    private Camera mCamera;
+    AFT_FSDKVersion version = new AFT_FSDKVersion();
+    AFT_FSDKEngine engine = new AFT_FSDKEngine();
+    ASAE_FSDKVersion mAgeVersion = new ASAE_FSDKVersion();
+    ASAE_FSDKEngine mAgeEngine = new ASAE_FSDKEngine();
+    ASGE_FSDKVersion mGenderVersion = new ASGE_FSDKVersion();
+    ASGE_FSDKEngine mGenderEngine = new ASGE_FSDKEngine();
+    List<AFT_FSDKFace> result = new ArrayList<>();
+    private int mWidth, mHeight, mFormat;
+    int mCameraID;
+    int mCameraRotate;
+    boolean mCameraMirror;
+    byte[] mImageNV21 = null;
+    FRAbsLoop mFRAbsLoop = null;
+    AFT_FSDKFace mAFT_FSDKFace = null;
+    class FRAbsLoop extends AbsLoop {
+        AFR_FSDKVersion version = new AFR_FSDKVersion();
+        AFR_FSDKEngine engine = new AFR_FSDKEngine();
+        AFR_FSDKFace result = new AFR_FSDKFace();
+
+        @Override
+        public void setup() {
+            AFR_FSDKError error = engine.AFR_FSDK_InitialEngine(FaceDB.appid, FaceDB.fr_key);
+            Log.d(TAG, "AFR_FSDK_InitialEngine = " + error.getCode());
+            error = engine.AFR_FSDK_GetVersion(version);
+            Log.d(TAG, "FR=" + version.toString() + "," + error.getCode()); //(210, 178 - 478, 446), degree = 1　780, 2208 - 1942, 3370
+        }
+
+        @Override
+        public void loop() {
+            if (mImageNV21 != null) {
+                AFR_FSDKError error = engine.AFR_FSDK_ExtractFRFeature(mImageNV21, mWidth, mHeight, AFR_FSDKEngine.CP_PAF_NV21, mAFT_FSDKFace.getRect(), mAFT_FSDKFace.getDegree(), result);
+                Log.d(TAG, "Face=" + result.getFeatureData()[0] + "," + result.getFeatureData()[1] + "," + result.getFeatureData()[2] + "," + error.getCode());
+                AFR_FSDKMatching score = new AFR_FSDKMatching();
+                float max = 0.0f;
+                String name = null;
+                Log.e(TAG, "loop: " + ((BaseApplication) getApplicationContext().getApplicationContext()).mFaceDB.mFaceList.size());
+                if (((BaseApplication) getApplicationContext().getApplicationContext()).mFaceDB.mFaceList.size() > 0) {
+                    //是否识别成功(如果第一次没成功就再次循环验证一次)
+                    for (Map.Entry<String, AFR_FSDKFace> entry : ((BaseApplication) getApplicationContext().getApplicationContext()).mFaceDB.mFaceList.entrySet()) {
+                        error = engine.AFR_FSDK_FacePairMatching(result, entry.getValue(), score);
+                        Log.d(TAG, "Score:" + score.getScore() + ", AFR_FSDK_FacePairMatching=" + error.getCode());
+                        if (max < score.getScore()) {
+                            max = score.getScore();
+                            name =  entry.getKey();
+
+                        }
+                    }
+                    if (max > 0.60f) {
+                        SharedPreferences userInfo = getSharedPreferences("user_info", 0);
+                        long secondTime = System.currentTimeMillis();
+                        if (secondTime - firstTime > 3000) {
+                            //找到相关住户执行开门
+                            firstTime = secondTime;
+                            Log.d(TAG, "fit Score:" + max + ", NAME:" + name);
+                            deviceId = userInfo.getString("deviceId", "");
+                            isopenCabinet.isopen(deviceId,name,"face");
+                        }
+
+                    } else {
+                        recindex = recindex + 1;
+                        if (recindex == 3) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(LockActivity.this,"未识别",Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                            //错误失败3次以上才提示
+
+                            recindex = 0;
+                        }
+                    }
+                } else {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(LockActivity.this,"无人脸数据",Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                }
+                mImageNV21 = null;
+            }
+        }
+
+        @Override
+        public void over() {
+            AFR_FSDKError error = engine.AFR_FSDK_UninitialEngine();
+            Log.d(TAG, "AFR_FSDK_UninitialEngine : " + error.getCode());
+        }
+
+    }
+
+private long firstTime=0;
+    int recindex = 0;
+
+    @Override
+    public Camera setupCamera() {
+        // TODO Auto-generated method stub
+        mCamera = Camera.open(mCameraID);
+        try {
+            Camera.Parameters parameters = mCamera.getParameters();
+
+            parameters.setPreviewSize(mWidth, mHeight);
+            parameters.setPreviewFormat(mFormat);
+            mCamera.setDisplayOrientation(90);
+            for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
+                Log.d(TAG, "SIZE:" + size.width + "x" + size.height);
+            }
+            for (Integer format : parameters.getSupportedPreviewFormats()) {
+                Log.d(TAG, "FORMAT:" + format);
+            }
+
+            List<int[]> fps = parameters.getSupportedPreviewFpsRange();
+            for (int[] count : fps) {
+                Log.d(TAG, "T:");
+                for (int data : count) {
+                    Log.d(TAG, "V=" + data);
+                }
+            }
+            mCamera.setParameters(parameters);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (mCamera != null) {
+            mWidth = mCamera.getParameters().getPreviewSize().width;
+            mHeight = mCamera.getParameters().getPreviewSize().height;
+        }
+        return mCamera;
+    }
+
+    @Override
+    public void setupChanged(int format, int width, int height) {
+
+    }
+
+    @Override
+    public boolean startPreviewImmediately() {
+        return true;
+    }
+
+    @Override
+    public Object onPreview(byte[] data, int width, int height, int format, long timestamp) {
+        AFT_FSDKError err = engine.AFT_FSDK_FaceFeatureDetect(data, width, height, AFT_FSDKEngine.CP_PAF_NV21, result);
+        Log.d(TAG, "AFT_FSDK_FaceFeatureDetect =" + err.getCode());
+        Log.d(TAG, "Face=" + result.size());
+        for (AFT_FSDKFace face : result) {
+            Log.d(TAG, "Face:" + face.toString());
+        }
+        if (mImageNV21 == null) {
+            if (!result.isEmpty()) {
+                mAFT_FSDKFace = result.get(0).clone();
+                mImageNV21 = data.clone();
+            } else {
+
+            }
+        }
+
+        Rect[] rects = new Rect[result.size()];
+        for (int i = 0; i < result.size(); i++) {
+            rects[i] = new Rect(result.get(i).getRect());
+        }
+        result.clear();
+        return rects;
+    }
+
+    @Override
+    public void onBeforeRender(CameraFrameData data) {
+
+    }
+
+    @Override
+    public void onAfterRender(CameraFrameData data) {
+        mGLSurfaceView.getGLES2Render().draw_rect((Rect[]) data.getParams(), Color.GREEN, 2);
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        CameraHelper.touchFocus(mCamera, event, v, this);
+        return false;
+    }
+
+    @Override
+    public void onAutoFocus(boolean success, Camera camera) {
+        if (success) {
+            Log.d(TAG, "Camera Focus SUCCESS!");
+        }
+    }
+
 }
