@@ -64,6 +64,7 @@ public class Finger_identify {
                sql="select UID,FEATURE from  PERSON";
                cursor1 = BaseApplication.getInstances().getDaoSession().getDatabase().rawQuery(sql,null);
                Logger.e("finger_identify"+"cursor1.getCount()"+cursor1.getCount());
+               if (cursor1.getCount()>0){
                feature=new byte[cursor1.getCount()][];
                Uids=new String[cursor1.getCount()];
                while (cursor1.moveToNext()){
@@ -87,6 +88,7 @@ public class Finger_identify {
                            nFeatuer[index++] = element2;
                        }
                    }
+               }
                    Logger.e("finger_identify"+"nFeatuer.length"+nFeatuer.length);
                    identifyResult = activty.microFingerVein.fv_index(nFeatuer, nFeatuer.length / 3352, img, pos, score);//比对是否通过
                    identifyResult = identifyResult && score[0] > IDENTIFY_SCORE_THRESHOLD;//得分是否达标
