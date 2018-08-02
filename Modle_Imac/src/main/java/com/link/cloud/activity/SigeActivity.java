@@ -246,6 +246,7 @@ public class SigeActivity extends BaseAppCompatActivity implements CallBackValue
     protected void initViews(Bundle savedInstanceState) {
         WorkService.setActactivity(this);
         text_tile.setText(R.string.sign_member);
+
         viewPager=(NoScrollViewPager)findViewById(R.id.bing_main_page) ;
         mesReceiver=new MesReceiver();
         signInMainFragment=new SignInMainFragment();
