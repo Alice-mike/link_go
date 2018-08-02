@@ -145,9 +145,6 @@ import static com.alibaba.sdk.android.ams.common.util.HexUtil.hexStringToByte;
  */
 public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet.isopen,SyncUserFeature.syncUser,SendLogMessageTastContract.sendLog,DownloadFeature.download,CameraSurfaceView.OnCameraListener, View.OnTouchListener, Camera.AutoFocusCallback{
     @Bind(R.id.head_text_01)
-
-
-
     TextView head_text_01;
     @Bind(R.id.head_text_02)
     TextView head_text_02;
@@ -200,6 +197,7 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
     private String[] localVoicersValue ;
     // 云端/本地选择按钮
     private RadioGroup mRadioGroup;
+    String s = "1111";
     // 引擎类型
     private String mEngineType = SpeechConstant.TYPE_CLOUD;
     DownloadFeature downloadFeature;
