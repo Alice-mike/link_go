@@ -136,6 +136,7 @@ public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet
     private String[] localVoicersValue ;
     // 云端/本地选择按钮
     private RadioGroup mRadioGroup;
+    String s = "1111";
     // 引擎类型
     private String mEngineType = SpeechConstant.TYPE_CLOUD;
     DownloadFeature downloadFeature;
