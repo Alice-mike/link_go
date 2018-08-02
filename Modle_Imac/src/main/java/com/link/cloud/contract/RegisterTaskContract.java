@@ -6,7 +6,6 @@ import com.cloopen.rest.sdk.CCPRestSmsSDK;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.link.cloud.R;
-import com.link.cloud.bean.FaceBindBean;
 import com.orhanobut.logger.Logger;
 
 import com.link.cloud.base.AbsAPICallback;
@@ -35,7 +34,6 @@ public class RegisterTaskContract extends BasePresenter<RegisterTaskContract.Reg
     public RegisterTaskContract registerTaskContract;
     public interface RegisterView extends MvpView {
         void onSuccess(Member memberInfo);
-        void onBindFaceSuccess(FaceBindBean faceBindBean);
     }
     public ReservoirUtils reservoirUtils;
 
@@ -83,48 +81,6 @@ public class RegisterTaskContract extends BasePresenter<RegisterTaskContract.Reg
                         cardInfo.setEndTime("至2016年12月20日");
                         //member.setCardInfo(cardInfo);*/
                         RegisterTaskContract.this.getMvpView().onSuccess(member);
-                    }
-                }));
-    }
-
-    public void bindFace(String deviceID, int numberType, String numberValue, int userType, String path, String faceFile) {
-        this.mCompositeSubscription.add(this.mDataManager.bindFace(deviceID,numberType,numberValue,userType,path,faceFile)
-                .subscribe(new AbsAPICallback<FaceBindBean>() {
-                    @Override
-                    public void onCompleted() {
-                        if (RegisterTaskContract.this.mCompositeSubscription != null) {
-                            RegisterTaskContract.this.mCompositeSubscription.remove(this);
-                        }
-                    }
-                    @Override
-                    protected void onError(ApiException e) {
-                        RegisterTaskContract.this.getMvpView().onError(e);
-                    }
-                    @Override
-                    protected void onPermissionError(ApiException e) {
-                        RegisterTaskContract.this.getMvpView().onPermissionError(e);
-                    }
-
-                    @Override
-                    protected void onResultError(ApiException e) {
-                        RegisterTaskContract.this.getMvpView().onResultError(e);
-                    }
-
-                    @Override
-                    public void onNext(FaceBindBean faceBindBean) {
-                        //准备指静脉设备
-                        /*Member member = new Member();
-                        member.setMemID("123");
-                        member.setName("老王");
-                        member.setPhone("13007436471");
-                        member.setSex("男");
-                        CardInfo cardInfo = new CardInfo();
-                        cardInfo.setName("白金卡");
-                        cardInfo.setCardID("123");
-                        cardInfo.setCardBalance("99.99元");
-                        cardInfo.setEndTime("至2016年12月20日");
-                        //member.setCardInfo(cardInfo);*/
-                        RegisterTaskContract.this.getMvpView().onBindFaceSuccess(faceBindBean);
                     }
                 }));
     }
