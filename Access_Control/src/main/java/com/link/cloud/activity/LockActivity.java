@@ -145,6 +145,9 @@ import static com.alibaba.sdk.android.ams.common.util.HexUtil.hexStringToByte;
  */
 public class LockActivity extends BaseAppCompatActivity implements IsopenCabinet.isopen,SyncUserFeature.syncUser,SendLogMessageTastContract.sendLog,DownloadFeature.download,CameraSurfaceView.OnCameraListener, View.OnTouchListener, Camera.AutoFocusCallback{
     @Bind(R.id.head_text_01)
+
+
+
     TextView head_text_01;
     @Bind(R.id.head_text_02)
     TextView head_text_02;
