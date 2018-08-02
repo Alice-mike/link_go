@@ -330,8 +330,10 @@ public class FirstFragment extends BaseFragment implements IsopenCabinet.isopen 
     };
     private Thread mdWorkThread=null;
     private void setupParam(){
+
+        activity.microFingerVein.close();
         Logger.e("FirstFragment"+"======setupParam=======");
-           activity.bRun = true;
+         activity.bRun = true;
            mdWorkThread = new Thread(runnablemol);
            mdWorkThread.start();
     }

@@ -93,45 +93,41 @@ public class BaseApi {
 
         @Override
         public Response intercept(Chain chain) throws IOException {
-                Request original = chain.request();
-                JsonObject postBody = bodyToJsonObject(original.body());
+            Request original = chain.request();
+            String code = "link";
+            String datetime = System.currentTimeMillis() + "";
+            String appkey = Utils.getMetaData(Constant.APP_KEY);
+            String sign = Utils.generateSign(code, appkey, datetime);
+            Request.Builder requestBuilder = original.newBuilder();
+            JsonObject postBody = bodyToJsonObject(original.body());
             if (postBody == null) {
-                Logger.e(postBody+">>>>>>>>>>>>>>>>>>>>>>>>");
-                return chain.proceed(original);
+                postBody = new JsonObject();
             }
-                String code = "link";
-                String datetime = System.currentTimeMillis() + "";
-                String appkey = Utils.getMetaData(Constant.APP_KEY);
-                String sign = Utils.generateSign(code, appkey, datetime);
-                Request.Builder requestBuilder = original.newBuilder();
+            postBody.addProperty("key", appkey);
+            postBody.addProperty("datetime", datetime);
+            postBody.addProperty("code", code);
+            postBody.addProperty("sign", sign);
+            RequestBody requestBody = RequestBody.create(MediaType.parse("application/json;charset=UTF-8"), postBody.toString());
+            requestBuilder.post(requestBody);
+            Request request = requestBuilder.build();
 
-                postBody.addProperty("key", appkey);
-                postBody.addProperty("datetime", datetime);
-                postBody.addProperty("code", code);
-                postBody.addProperty("sign", sign);
-                RequestBody requestBody = RequestBody.create(MediaType.parse("application/json;charset=UTF-8"), postBody.toString());
-                requestBuilder.post(requestBody);
-                Request request = requestBuilder.build();
+            //return chain.proceed(request);
+            long t1 = System.nanoTime();
+            Response originalResponse = chain.proceed(request);
+            long t2 = System.nanoTime();
+            double time = (t2 - t1) / 1e6d;
 
-                //return chain.proceed(request);
-                long t1 = System.nanoTime();
-                Response originalResponse = chain.proceed(request);
-                long t2 = System.nanoTime();
-                double time = (t2 - t1) / 1e6d;
-
-                if (BaseApplication.getInstance().log) {
-                    if (request.method().equals("GET")) {
-                        Logger.e(String.format("GET " + F_REQUEST_WITHOUT_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), originalResponse.code(), originalResponse.headers()));
-                    } else if (request.method().equals("POST")) {
-                        Logger.e(String.format("POST " + F_REQUEST_WITH_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), postBody.toString(), originalResponse.code(), originalResponse.headers()));
-                    } else if (request.method().equals("PUT")) {
-                        Logger.e(String.format("PUT " + F_REQUEST_WITH_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), postBody.toString(), originalResponse.code(), originalResponse.headers()));
-                    } else if (request.method().equals("DELETE")) {
-                        Logger.e(String.format("DELETE " + F_REQUEST_WITHOUT_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), originalResponse.code(), originalResponse.headers()));
-                    }
+            if (BaseApplication.getInstance().log) {
+                if (request.method().equals("GET")) {
+                    Logger.e(String.format("GET " + F_REQUEST_WITHOUT_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), originalResponse.code(), originalResponse.headers()));
+                } else if (request.method().equals("POST")) {
+                    Logger.e(String.format("POST " + F_REQUEST_WITH_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), postBody.toString(), originalResponse.code(), originalResponse.headers()));
+                } else if (request.method().equals("PUT")) {
+                    Logger.e(String.format("PUT " + F_REQUEST_WITH_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), postBody.toString(), originalResponse.code(), originalResponse.headers()));
+                } else if (request.method().equals("DELETE")) {
+                    Logger.e(String.format("DELETE " + F_REQUEST_WITHOUT_BODY + F_RESPONSE_WITHOUT_BODY, request.url(), time, request.headers(), originalResponse.code(), originalResponse.headers()));
                 }
-
-
+            }
             return originalResponse;
         }
 

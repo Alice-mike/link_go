@@ -19,7 +19,6 @@ import com.link.cloud.bean.ReturnBean;
 import com.link.cloud.bean.Sign_data;
 import com.link.cloud.bean.SignedResponse;
 import com.link.cloud.bean.SyncFeaturesPage;
-import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.bean.UserResponse;
@@ -102,9 +101,6 @@ public class DataManager {
     }
     public Observable<SyncFeaturesPage>syncUserFeaturePages(String deviceId, int currentPage){
         return this.httpClientHelper.syncUserFeaturePages(deviceId,currentPage).compose(RxUtils.applyIOToMainThreadSchedulers());
-    }
-    public Observable<SyncUserFace>syncUserFacePages(String deviceId){
-        return this.httpClientHelper.syncUserFacePages(deviceId).compose(RxUtils.applyIOToMainThreadSchedulers());
     }
 
 }

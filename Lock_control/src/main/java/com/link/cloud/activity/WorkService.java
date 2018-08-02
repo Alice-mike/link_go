@@ -76,7 +76,8 @@ public class WorkService extends AliyunMessageIntentService implements DeviceHea
     public void onCreate() {
         super.onCreate();
         microFingerVein=MicroFingerVein.getInstance(this);
-//        try {
+
+        //        try {
 //            microFingerVein.close();
 //        }catch (Exception e){
 //          Logger.e(e.getMessage());

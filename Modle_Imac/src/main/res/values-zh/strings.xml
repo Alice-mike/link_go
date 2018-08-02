@@ -27,9 +27,4 @@
     <string name="digitKeyppad_three">3</string>
     <string name="digitKeyppad_two">2</string>
     <string name="digitKeyppad_one">1</string>
-    <string name="face_back">返回</string>
-    <string name="face_bind">绑定人脸</string>
-    <string name="会员卡号">会员卡号</string>
-    <string name="确定">确定</string>
-
 </resources>
