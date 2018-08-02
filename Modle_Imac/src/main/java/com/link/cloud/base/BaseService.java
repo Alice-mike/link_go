@@ -5,7 +5,6 @@ import com.link.cloud.bean.CodeInfo;
 import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
-import com.link.cloud.bean.FaceBindBean;
 import com.link.cloud.bean.Member;
 import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.RestResponse;
@@ -14,23 +13,13 @@ import com.link.cloud.bean.RetrunLessons;
 import com.link.cloud.bean.ReturnBean;
 import com.link.cloud.bean.SignUserdata;
 import com.link.cloud.bean.SyncFeaturesPage;
-import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.bean.UserResponse;
 import com.link.cloud.bean.Voucher;
 
-import okhttp3.MultipartBody;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
-import retrofit2.Call;
 import retrofit2.http.Body;
-import retrofit2.http.GET;
-import retrofit2.http.Multipart;
 import retrofit2.http.POST;
-import retrofit2.http.Part;
-import retrofit2.http.Streaming;
-import retrofit2.http.Url;
 import rx.Observable;
 
 /**
@@ -179,25 +168,4 @@ public interface BaseService {
 
     @POST("checkInByQrCode")
     Observable<Code_Message>checkInByQrCode(@Body JsonObject paras);
-    @Multipart
-    @POST("bindUserFace")
-    Observable<FaceBindBean>bindFace(@Part("deviceId")RequestBody deviceId,
-    @Part("userType")RequestBody userType,
-                                     @Part("numberValue")RequestBody numberValue,
-                                     @Part("numberType")RequestBody numberType,
-                                     @Part("code")RequestBody code,
-                                     @Part("key")RequestBody key,
-                                     @Part("datetime")RequestBody datetime,
-                                     @Part("sign")RequestBody sign,
-                                     @Part() MultipartBody.Part faceImage,
-                                     @Part() MultipartBody.Part faceData
-
-    );
-
-    @Streaming //大文件时要加不然会OOM
-    @GET
-    Call<ResponseBody> downloadFile(@Url String fileUrl);
-    @POST("syncUserFacePages")
-    Observable<SyncUserFace>syncUserFacePages(@Body JsonObject params);
-
 }
