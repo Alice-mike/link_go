@@ -317,9 +317,7 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
             signUserDao.insertInTx(downLoadData.getData());
         }
     }
-    int totalPage;
-    int currentPage;
-    int downloadPage;
+    int totalPage=0,currentPage=1,downloadPage=0;
     ArrayList<Person> SyncFeaturesPages = new ArrayList<>();
     @Override
     public void getPagesInfo(PagesInfoBean resultResponse) {
@@ -332,9 +330,8 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        currentPage++;
                         Logger.e(currentPage + "currentPage");
-                        feature.syncUserFeaturePages(FileUtils.loadDataFromFile(getContext(), "deviceId.text"), currentPage);
+                        feature.syncUserFeaturePages(FileUtils.loadDataFromFile(getContext(), "deviceId.text"), currentPage++);
                     }
                 }).start();
             }
@@ -363,7 +360,7 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
             SyncFeaturesPages.addAll(resultResponse.getData());
             if (downloadPage == totalPage) {
                 PersonDao personDao = BaseApplication.getInstances().getDaoSession().getPersonDao();
-                personDao.insertInTx(resultResponse.getData());
+                personDao.insertInTx(SyncFeaturesPages);
                 Logger.e(SyncFeaturesPages.size() + getResources().getString(R.string.syn_data));
                 NetworkInfo info = connectivityManager.getActiveNetworkInfo(); //获取活动的网络连接信息
                 if (info != null) {   //当前没有已激活的网络连接（表示用户关闭了数据流量服务，也没有开启WiFi等别的数据服务）
