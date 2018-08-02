@@ -27,6 +27,7 @@ import com.hotelmanager.xzy.util.OpenDoorUtil;
 import com.link.cloud.BaseApplication;
 import com.link.cloud.R;
 import com.link.cloud.activity.LockActivity;
+import com.link.cloud.activity.WelcomeActivity;
 import com.link.cloud.activity.WorkService;
 import com.link.cloud.base.ApiException;
 import com.link.cloud.bean.CabinetNumberData;
@@ -52,16 +53,20 @@ import com.link.cloud.greendaodemo.CabinetNumber;
 import com.link.cloud.greendaodemo.CabinetRecord;
 import com.link.cloud.greendaodemo.Person;
 //import com.link.cloud.greendaodemo.SignPerson;
+import com.link.cloud.greendaodemo.SignUser;
 //import com.link.cloud.utils.CountDownTimer;
 import com.link.cloud.utils.APKVersionCodeUtils;
+import com.link.cloud.utils.FileUtil;
 import com.link.cloud.utils.FileUtils;
 import com.link.cloud.utils.ToastUtils;
 import com.link.cloud.utils.Utils;
 import com.link.cloud.view.CheckUsedRecored;
+import com.link.cloud.view.ExitAlertDialog;
 import com.link.cloud.view.LockMessage;
 import com.orhanobut.logger.Logger;
 
 import org.greenrobot.greendao.query.QueryBuilder;
+import org.greenrobot.greendao.query.WhereCondition;
 
 import java.io.File;
 import java.io.IOException;

@@ -6,6 +6,7 @@ import com.link.cloud.bean.CodeInfo;
 import com.link.cloud.bean.Code_Message;
 import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
+import com.link.cloud.bean.FaceBindBean;
 import com.link.cloud.bean.LessonResponse;
 import com.link.cloud.bean.Member;
 import com.link.cloud.bean.MessagetoJson;
@@ -17,6 +18,7 @@ import com.link.cloud.bean.ReturnBean;
 import com.link.cloud.bean.SignUserdata;
 import com.link.cloud.bean.SignedResponse;
 import com.link.cloud.bean.SyncFeaturesPage;
+import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
 import com.link.cloud.bean.UpdateMessage;
 import com.link.cloud.bean.UserResponse;
@@ -109,5 +111,12 @@ public class DataManager {
     }
     public Observable<Code_Message>checkInByQrCode(String deviceId, String qrcode){
         return this.httpClientHelper.checkInByQrCode(deviceId,qrcode).compose(RxUtils.applyIOToMainThreadSchedulers());
+    }
+    public Observable<SyncUserFace>syncUserFacePages(String deviceId){
+        return this.httpClientHelper.syncUserFacePages(deviceId).compose(RxUtils.applyIOToMainThreadSchedulers());
+    }
+
+    public Observable<FaceBindBean> bindFace(String deviceID, int numberType, String numberValue, int userType, String path, String faceFile) {
+        return this.httpClientHelper.bindFace(deviceID,numberType,numberValue,userType,path,faceFile).compose(RxUtils.applyIOToMainThreadSchedulers());
     }
 }
