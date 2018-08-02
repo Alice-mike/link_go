@@ -38,6 +38,7 @@ import com.link.cloud.bean.DeviceData;
 import com.link.cloud.bean.DownLoadData;
 import com.link.cloud.bean.PagesInfoBean;
 import com.link.cloud.bean.PushMessage;
+import com.link.cloud.bean.PushUpDateBean;
 import com.link.cloud.bean.SyncFeaturesPage;
 import com.link.cloud.bean.SyncUserFace;
 import com.link.cloud.bean.UpDateBean;
@@ -644,6 +645,23 @@ public class BaseApplication extends MultiDexApplication  implements GetDeviceID
             Gson gson = new Gson();
             BindFaceMes bindFaceMes = gson.fromJson(text, BindFaceMes.class);
             DownLoad.download(bindFaceMes.getFaceUrl(),bindFaceMes.getUid());
+        }
+        if("4".equals(pushMessage.getType())){
+            Gson gson = new Gson();
+            PushUpDateBean pushUpDateBean = gson.fromJson(text, PushUpDateBean.class);
+            int device_type_id = pushUpDateBean.getDevice_type_id();
+            if(device_type_id==1){
+                if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                    File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "lingxi.apk");
+                    if (file.exists()) {
+                        file.delete();
+                    }
+                    Toast.makeText(getContext(), "通知栏下载中", Toast.LENGTH_SHORT).show();
+                    DownloadUtils utils = new DownloadUtils(getContext());
+                    utils.downloadAPK(pushUpDateBean.getPackage_path(), "lingxi.apk");
+                    Logger.e(file.getAbsolutePath());
+                }
+            }
         }
 
     }

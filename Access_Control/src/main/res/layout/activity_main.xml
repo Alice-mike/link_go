@@ -66,7 +66,17 @@
         android:layout_width="match_parent"
         android:layout_height="400dp">
 
+        <LinearLayout
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center_horizontal">
 
+            <EditText
+                android:id="@+id/code_mumber1"
+                android:layout_width="1dp"
+                android:layout_height="1dp" />
+        </LinearLayout>
         <com.guo.android_extend.widget.CameraSurfaceView
             android:id="@+id/surfaceView"
             android:layout_width="1dp"
@@ -75,7 +85,7 @@
         <com.guo.android_extend.widget.CameraGLSurfaceView
             android:id="@+id/glsurfaceView"
             android:layout_width="500dp"
-            android:layout_marginTop="50dp"
+            android:layout_marginTop="70dp"
             android:layout_height="400dp"
             android:layout_centerInParent="true"
             android:layout_gravity="center_horizontal" />
@@ -225,17 +235,7 @@
 
 
             </LinearLayout>
-            <LinearLayout
-                android:layout_width="1dp"
-                android:layout_height="1dp"
-                android:layout_gravity="center_horizontal"
-                android:gravity="center_horizontal">
 
-                <EditText
-                    android:id="@+id/code_mumber1"
-                    android:layout_width="1dp"
-                    android:layout_height="1dp" />
-            </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
 
